@@ -5,7 +5,7 @@ $client = new DynamoDbClient(['region' => 'us-east-1', 'version' => 'latest']);
 
 // In your form handling:
 $username = $_POST['username'];
-$password = password_hash($_POST['password'], PASSWORD_DEFAULT); // Secure hashing!
+$password = password_hash($_POST['password'], PASSWORD_DEFAULT); 
 
 $client->putItem([
     'TableName' => 'Users',
