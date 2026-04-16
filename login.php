@@ -1,0 +1,15 @@
+$result = $client->getItem([
+    'TableName' => 'Users',
+    'Key' => ['username' => ['S' => $username]]
+]);
+
+if (isset($result['Item'])) {
+    $storedHash = $result['Item']['password']['S'];
+    if (password_verify($_POST['password'], $storedHash)) {
+        session_start();
+        $_SESSION['username'] = $username;
+        // Proceed to dashboard
+    } else {
+        echo "Invalid password.";
+    }
+}
