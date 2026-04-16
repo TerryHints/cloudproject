@@ -13,7 +13,7 @@ if (isset($result['Item'])) {
     if (password_verify($_POST['password'], $storedHash)) {
         session_start();
         $_SESSION['username'] = $username;
-        // Proceed to dashboard
+        header("Location: dashboard.php");
     } else {
         echo "Invalid password.";
     }
