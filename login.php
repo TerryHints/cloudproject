@@ -1,3 +1,8 @@
+<?php
+require 'db_config.php';
+
+$username = $_POST['username'];
+
 $result = $client->getItem([
     'TableName' => 'Users',
     'Key' => ['username' => ['S' => $username]]
@@ -13,3 +18,4 @@ if (isset($result['Item'])) {
         echo "Invalid password.";
     }
 }
+?>
