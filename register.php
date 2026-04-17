@@ -11,7 +11,9 @@ $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
 $email = filter_var($_POST['email'], FILTER_SANITIZE_EMAIL);
 
 try {
-    $client->putItem([
+    error_log("[register.php] putItem starting for username={$username}, email={$email}");
+
+    $result = $client->putItem([
         'TableName' => 'Users',
         'Item' => [
             'username' => ['S' => $username],
@@ -19,6 +21,8 @@ try {
             'email'    => ['S' => $email],
         ]
     ]);
+
+    error_log("[register.php] putItem succeeded: " . json_encode($result));
     
     // If we reach this line, the database call succeeded!
     echo "Registration successful! Redirecting...";
@@ -26,6 +30,7 @@ try {
     exit();
 
 } catch (Exception $e) {
+    error_log("[register.php] putItem failed: " . $e->getMessage());
     // If anything goes wrong, the code jumps here
     echo "Database Error: " . $e->getMessage();
 }
