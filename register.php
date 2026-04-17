@@ -16,6 +16,8 @@ try {
     $result = $client->putItem([
         'TableName' => 'Users',
         'Item' => [
+            "UserID" => ["S" => "unique-user-id-123"],
+            "CreationDate" => ["S" => "2026-04-16T23:55:00Z"],
             'username' => ['S' => $username],
             'password' => ['S' => $password],
             'email'    => ['S' => $email],
