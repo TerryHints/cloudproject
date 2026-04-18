@@ -26,14 +26,14 @@ try {
 
     error_log("[register.php] putItem succeeded: " . json_encode($result));
     
-    // If we reach this line, the database call succeeded!
+    
     echo "Registration successful! Redirecting...";
     header("Location: login.html");
     exit();
 
 } catch (Exception $e) {
     error_log("[register.php] putItem failed: " . $e->getMessage());
-    // If anything goes wrong, the code jumps here
+    
     echo "Database Error: " . $e->getMessage();
 }
 ?>
