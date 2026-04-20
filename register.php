@@ -33,7 +33,6 @@ try {
         exit();
     }
     
-    // Check if email already exists
     $emailCheck = $client->scan([
         'TableName' => 'Users',
         'FilterExpression' => 'email = :email',
@@ -60,7 +59,6 @@ try {
 
     error_log("[register.php] putItem succeeded: " . json_encode($result));
     
-    echo "<!DOCTYPE html><html><head><title>Registration Success</title></head><body><p>Registration successful! Redirecting...</p></body></html>";
     header("Location: login.html");
     exit();
 
