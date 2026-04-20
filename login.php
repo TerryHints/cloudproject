@@ -11,13 +11,17 @@ if (!isset($_POST['username']) || !isset($_POST['password'])) {
 $username = $_POST['username'];
 
 try {
-    $result = $client->getItem([
+    $result = $client->scan([
         'TableName' => 'Users',
-        'Key' => ['username' => ['S' => $username]]
+        'FilterExpression' => 'username = :username',
+        'ExpressionAttributeValues' => [
+            ':username' => ['S' => $username]
+        ]
     ]);
 
-    if (isset($result['Item'])) {
-        $storedHash = $result['Item']['password']['S'];
+    if (count($result['Items']) > 0) {
+        $item = $result['Items'][0];
+        $storedHash = $item['password']['S'];
         if (password_verify($_POST['password'], $storedHash)) {
             session_start();
             $_SESSION['username'] = $username;
