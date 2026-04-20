@@ -4,7 +4,7 @@ require 'db_config.php';
 use Aws\DynamoDb\DynamoDbClient;
 
 if (!isset($_POST['username']) || !isset($_POST['password'])) {
-    echo "Username and password are required.";
+    echo "<!DOCTYPE html><html><head><title>Login Error</title></head><body><p>Username and password are required.</p><a href='login.html'>Back to Login</a></body></html>";
     exit();
 }
 
@@ -28,12 +28,12 @@ try {
             header("Location: home2.html");
             exit();
         } else {
-            echo "Invalid password.";
+            echo "<!DOCTYPE html><html><head><title>Login Error</title></head><body><p>Invalid password.</p><a href='login.html'>Back to Login</a></body></html>";
         }
     } else {
-        echo "User not found.";
+        echo "<!DOCTYPE html><html><head><title>Login Error</title></head><body><p>User not found.</p><a href='login.html'>Back to Login</a></body></html>";
     }
 } catch (Exception $e) {
-    echo "Database Error: " . $e->getMessage();
+    echo "<!DOCTYPE html><html><head><title>Login Error</title></head><body><p>Database Error: " . htmlspecialchars($e->getMessage()) . "</p><a href='login.html'>Back to Login</a></body></html>";
 }
 ?>
