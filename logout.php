@@ -1,4 +1,8 @@
 <?php
+require 'vendor/autoload.php';
+require 'db_config.php';
+use Aws\DynamoDb\DynamoDbClient;
+
 session_start();
 
 $_SESSION = array();

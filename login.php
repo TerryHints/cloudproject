@@ -1,5 +1,7 @@
 <?php
+require 'vendor/autoload.php';
 require 'db_config.php';
+use Aws\DynamoDb\DynamoDbClient;
 
 $username = $_POST['username'];
 
