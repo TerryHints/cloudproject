@@ -8,7 +8,7 @@ if (!isset($_POST['username']) || !isset($_POST['password'])) {
     exit();
 }
 
-$username = $_POST['username'];
+$username = filter_var($_POST['username'], FILTER_SANITIZE_SPECIAL_CHARS);
 
 try {
     $result = $client->scan([
