@@ -25,7 +25,7 @@ try {
         if (password_verify($_POST['password'], $storedHash)) {
             session_start();
             $_SESSION['username'] = $username;
-            header("Location: home2.html");
+            header("Location: home2.php");
             exit();
         } else {
             echo "<!DOCTYPE html><html><head><title>Login Error</title></head><body><p>Invalid password.</p><a href='login.html'>Back to Login</a></body></html>";
