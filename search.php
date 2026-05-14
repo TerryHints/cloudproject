@@ -1,10 +1,12 @@
 <?php
 
-// ---------------------------
-// API LAYER (FIXED)
-// ---------------------------
+$query = $_GET['q'] ?? '';
 
-function apiRequest($url) {
+function fetchCards($query) {
+
+    $url = "https://api.riftcodex.com/cards/search?query=" .
+           urlencode($query) .
+           "&dir=1&page=1&size=50";
 
     $ch = curl_init($url);
 
@@ -27,48 +29,12 @@ function apiRequest($url) {
         return [];
     }
 
-    return json_decode($res, true);
-}
-
-
-// ---------------------------
-// API FUNCTIONS
-// ---------------------------
-
-// Browse cards
-function getCards($page = 1, $size = 50) {
-
-    $url = "https://api.riftcodex.com/cards?page=$page&size=$size&dir=1";
-
-    $data = apiRequest($url);
+    $data = json_decode($res, true);
 
     return $data['items'] ?? [];
 }
 
-// Search cards (fuzzy)
-function searchCards($query, $page = 1, $size = 50) {
-
-    $url = "https://api.riftcodex.com/cards/name?fuzzy=" .
-           urlencode($query) .
-           "&page=$page&size=$size";
-
-    $data = apiRequest($url);
-
-    return $data['items'] ?? $data['cards'] ?? [];
-}
-
-
-// ---------------------------
-// MAIN LOGIC
-// ---------------------------
-
-$query = $_GET['q'] ?? '';
-
-if (!empty($query)) {
-    $cards = searchCards($query, 1, 50);
-} else {
-    $cards = getCards(1, 50);
-}
+$cards = fetchCards($query);
 
 ?>
 
@@ -77,10 +43,9 @@ if (!empty($query)) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RiftCodex Cards</title>
+<title>RiftCodex PHP Search</title>
 
 <style>
-
 body {
     margin: 0;
     padding: 20px;
@@ -89,53 +54,29 @@ body {
     color: white;
 }
 
-h1 {
-    margin-bottom: 10px;
-}
-
-form {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 15px;
-}
-
 input {
-    flex: 1;
+    width: 100%;
     padding: 12px;
+    border-radius: 10px;
+    border: none;
     font-size: 16px;
-    border-radius: 10px;
-    border: none;
-}
-
-button {
-    padding: 12px 18px;
-    border: none;
-    border-radius: 10px;
-    background: #3b82f6;
-    color: white;
-    cursor: pointer;
-}
-
-button:hover {
-    background: #2563eb;
+    margin-bottom: 15px;
 }
 
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 16px;
+    gap: 18px;
 }
 
 .card {
     background: #111827;
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.08);
 }
 
 .card img {
     width: 100%;
-    display: block;
 }
 
 .content {
@@ -161,12 +102,6 @@ button:hover {
     color: #cbd5e1;
     margin-top: 10px;
 }
-
-.status {
-    margin-bottom: 15px;
-    color: #94a3b8;
-}
-
 </style>
 </head>
 
@@ -177,63 +112,51 @@ button:hover {
 <form method="GET">
     <input type="text"
            name="q"
-           placeholder="Search cards (Ashe, Unit, Rare...)"
+           placeholder="Search cards..."
            value="<?php echo htmlspecialchars($query); ?>">
-    <button type="submit">Search</button>
 </form>
 
-<div class="status">
-    Showing <?php echo count($cards); ?> cards
-    <?php if (!empty($query)): ?>
-        for "<?php echo htmlspecialchars($query); ?>"
-    <?php endif; ?>
-</div>
+<p>
+Showing <?php echo count($cards); ?> cards
+</p>
 
 <div class="grid">
 
-<?php if (!empty($cards)): ?>
+<?php foreach ($cards as $card): ?>
 
-    <?php foreach ($cards as $card): ?>
+    <div class="card">
 
-        <div class="card">
+        <img src="<?php echo htmlspecialchars($card['media']['image_url'] ?? ''); ?>">
 
-            <img src="<?php echo htmlspecialchars($card['media']['image_url'] ?? ''); ?>">
+        <div class="content">
 
-            <div class="content">
+            <div class="name">
+                <?php echo htmlspecialchars($card['name'] ?? 'Unknown'); ?>
+            </div>
 
-                <div class="name">
-                    <?php echo htmlspecialchars($card['name'] ?? 'Unknown'); ?>
-                </div>
+            <div>
+                <span class="badge">
+                    <?php echo htmlspecialchars($card['classification']['type'] ?? 'Type'); ?>
+                </span>
 
-                <div>
-                    <span class="badge">
-                        <?php echo htmlspecialchars($card['classification']['type'] ?? 'Type'); ?>
-                    </span>
+                <span class="badge">
+                    <?php echo htmlspecialchars($card['classification']['rarity'] ?? 'Rarity'); ?>
+                </span>
 
-                    <span class="badge">
-                        <?php echo htmlspecialchars($card['classification']['rarity'] ?? 'Rarity'); ?>
-                    </span>
+                <span class="badge">
+                    <?php echo htmlspecialchars($card['set']['label'] ?? 'Set'); ?>
+                </span>
+            </div>
 
-                    <span class="badge">
-                        <?php echo htmlspecialchars($card['set']['label'] ?? 'Set'); ?>
-                    </span>
-                </div>
-
-                <div class="text">
-                    <?php echo htmlspecialchars($card['text']['plain'] ?? ''); ?>
-                </div>
-
+            <div class="text">
+                <?php echo htmlspecialchars($card['text']['plain'] ?? ''); ?>
             </div>
 
         </div>
 
-    <?php endforeach; ?>
+    </div>
 
-<?php else: ?>
-
-    <p style="color:#94a3b8;">No cards found.</p>
-
-<?php endif; ?>
+<?php endforeach; ?>
 
 </div>
 
