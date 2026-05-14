@@ -5,176 +5,236 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Riftbound Cards</title>
   <style>
-    body {
+    * {
       margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
       background: #f4f6fb;
       color: #1f2937;
+    }
+
+    nav {
+      width: 100%;
+      background: #333;
+      padding: 1rem;
+      position: fixed;
+      top: 0;
+      left: 0;
       display: flex;
       justify-content: center;
-      min-height: 100vh;
-      padding: 24px;
+      gap: 20px;
+      z-index: 100;
     }
+
+    nav a {
+      color: white;
+      text-decoration: none;
+      font-weight: 500;
+      transition: color 0.2s;
+    }
+
+    nav a:hover {
+      color: #D13639;
+    }
+
     .page {
       width: 100%;
-      max-width: 860px;
+      max-width: 1000px;
       background: #ffffff;
-      border-radius: 18px;
-      box-shadow: 0 18px 45px rgba(25, 29, 38, 0.12);
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
       padding: 28px;
+      margin: 80px auto 40px;
     }
+
     h1 {
-      margin: 0 0 14px;
+      margin-bottom: 12px;
       font-size: 2rem;
-      letter-spacing: -0.03em;
+      color: #0f172a;
     }
-    p.lead {
-      margin: 0 0 24px;
-      color: #475569;
+
+    .lead {
+      margin-bottom: 24px;
+      color: #64748b;
       line-height: 1.6;
     }
+
     .controls {
       display: flex;
-      flex-wrap: wrap;
       gap: 12px;
-      margin-bottom: 20px;
+      margin-bottom: 24px;
+      align-items: center;
     }
-    .controls button {
-      border: none;
-      border-radius: 10px;
-      padding: 12px 18px;
+
+    #set-select {
+      padding: 10px 14px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 1rem;
       cursor: pointer;
-      font-weight: 600;
-      background: #1d4ed8;
-      color: white;
-      transition: transform 0.15s ease, filter 0.15s ease;
+      flex: 1;
+      max-width: 300px;
     }
-    .controls button:disabled {
-      opacity: 0.45;
-      cursor: default;
-      transform: none;
-    }
-    .controls button:hover:not(:disabled) {
-      filter: brightness(1.05);
-      transform: translateY(-1px);
-    }
+
     #message {
-      margin-bottom: 18px;
-      color: #334155;
+      padding: 12px 16px;
+      margin-bottom: 20px;
+      background: #f0fdf4;
+      border-left: 4px solid #22c55e;
+      border-radius: 4px;
+      color: #166534;
+      font-size: 0.95rem;
     }
+
     .card-list {
       display: grid;
-      gap: 14px;
+      gap: 16px;
     }
+
     .card-item {
-      padding: 16px 18px;
-      border-radius: 14px;
-      border: 1px solid #e2e8f0;
-      background: #f8fafc;
       display: grid;
-      grid-template-columns: 80px 1fr;
-      gap: 12px;
-      align-items: flex-start;
+      grid-template-columns: 90px 1fr;
+      gap: 16px;
+      padding: 16px;
+      border: 1px solid #e5e7eb;
+      border-radius: 10px;
+      background: #f9fafb;
+      transition: box-shadow 0.2s;
     }
+
+    .card-item:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+    }
+
     .card-art {
-      width: 80px;
-      height: 100px;
+      width: 90px;
+      height: 120px;
       border-radius: 6px;
       background: #e5e7eb;
       overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
     }
+
     .card-art img {
       width: 100%;
       height: 100%;
       object-fit: cover;
     }
+
     .card-details {
       display: flex;
       flex-direction: column;
-      gap: 6px;
+      gap: 8px;
     }
+
     .card-name {
-      font-size: 1rem;
+      font-size: 1.05rem;
       font-weight: 700;
       color: #0f172a;
-      margin: 0;
     }
+
     .card-meta {
       display: flex;
       gap: 8px;
       flex-wrap: wrap;
-      font-size: 0.85rem;
     }
+
     .badge {
+      display: inline-block;
+      padding: 4px 10px;
       background: #dbeafe;
       color: #1e40af;
-      padding: 4px 8px;
       border-radius: 4px;
-      font-weight: 500;
+      font-size: 0.8rem;
+      font-weight: 600;
     }
+
     .badge.rarity {
       background: #fef3c7;
       color: #b45309;
     }
+
     .badge.faction {
       background: #ddd6fe;
       color: #5b21b6;
     }
+
+    .card-stats {
+      font-size: 0.9rem;
+      color: #475569;
+    }
+
     .card-desc {
       font-size: 0.9rem;
       color: #64748b;
-      line-height: 1.4;
+      line-height: 1.5;
+      margin-top: 4px;
     }
-    @media (max-width: 640px) {
-      .controls {
-        flex-direction: column;
+
+    @media (max-width: 768px) {
+      .page {
+        margin-top: 90px;
+        padding: 20px;
       }
+
       .card-item {
-        flex-direction: column;
-        align-items: flex-start;
+        grid-template-columns: 1fr;
       }
-      .card-item span {
-        margin-top: 8px;
+
+      .card-art {
+        width: 100%;
+        height: 150px;
       }
     }
   </style>
 </head>
 <body>
-  <nav style="width: 100%; background: #333; padding: 1rem; position: fixed; top: 0; left: 0; display: flex; justify-content: center; gap: 20px; margin: 0;">
-    <a href="home2.php" style="color: white; text-decoration: none; font-weight: 500;">Home</a>
-    <a href="logout.php" style="color: white; text-decoration: none; font-weight: 500;">Logout</a>
+  <nav>
+    <a href="home2.php">Home</a>
+    <a href="logout.php">Logout</a>
   </nav>
-  <div class="page" style="margin-top: 60px;">
+
+  <div class="page">
     <h1>Riftbound Cards</h1>
     <p class="lead">Browse all cards from the Riftbound game. Select a set to view cards.</p>
+
     <div class="controls">
-      <select id="set-select" style="padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 1rem; cursor: pointer;">
-        <option value="">-- Select a set --</option>
+      <select id="set-select">
+        <option value="">-- Loading sets --</option>
       </select>
     </div>
-    <p id=message = document.getElementById('message');
+
+    <p id="message">Loading content...</p>
+    <div id="card-list" class="card-list"></div>
+  </div>
+
+  <script>
+    const message = document.getElementById('message');
     const cardList = document.getElementById('card-list');
     const setSelect = document.getElementById('set-select');
     let allSets = [];
 
     async function fetchContent() {
-      message.textContent = 'Loading content...';
-      cardList.innerHTML = '';
-      setSelect.disabled = true;
-
       try {
         const response = await fetch('https://api.riftcodex.com/riftbound/content/v1/content', {
           headers: {
             'X-Riot-Token': 'RGAPI-9af98452-0f95-4b24-a5de-0c8a91112c6c'
           }
         });
+
         if (!response.ok) {
           throw new Error(`HTTP ${response.status} ${response.statusText}`);
         }
 
         const data = await response.json();
         allSets = data.sets || [];
-        
+
         if (!allSets.length) {
           message.textContent = 'No sets found.';
           return;
@@ -189,9 +249,8 @@
         });
 
         message.textContent = `Loaded ${allSets.length} sets. Select one to view cards.`;
-        setSelect.disabled = false;
       } catch (error) {
-        message.textContent = `Fetch failed: ${error.message}`;
+        message.textContent = `Error: ${error.message}`;
       }
     }
 
@@ -212,37 +271,32 @@
       for (const card of cards) {
         const item = document.createElement('div');
         item.className = 'card-item';
-        
-        const artHtml = card.art?.thumbnailURL 
-          ? `<div class="card-art"><img src="${escapeHtml(card.art.thumbnailURL)}" alt="${escapeHtml(card.name)}"></div>`
-          : `<div class="card-art"></div>`;
-        
-        const badges = [
-          card.type ? `<span class="badge">${escapeHtml(card.type)}</span>` : '',
-          card.rarity ? `<span class="badge rarity">${escapeHtml(card.rarity)}</span>` : '',
-          card.faction ? `<span class="badge faction">${escapeHtml(card.faction)}</span>` : ''
-        ].filter(b => b).join('');
 
-        const statsHtml = card.stats 
-          ? `<div style="font-size: 0.85rem; color: #475569;">Cost: ${card.stats.cost || 0} | Power: ${card.stats.power || 0} | Might: ${card.stats.might || 0}</div>`
+        const artHtml = card.art?.thumbnailURL
+          ? `<div class="card-art"><img src="${card.art.thumbnailURL}" alt="${card.name}" loading="lazy"></div>`
+          : `<div class="card-art"></div>`;
+
+        const badges = [];
+        if (card.type) badges.push(`<span class="badge">${card.type}</span>`);
+        if (card.rarity) badges.push(`<span class="badge rarity">${card.rarity}</span>`);
+        if (card.faction) badges.push(`<span class="badge faction">${card.faction}</span>`);
+
+        const stats = card.stats;
+        const statsHtml = stats
+          ? `<div class="card-stats">Cost: ${stats.cost || 0} | Power: ${stats.power || 0} | Might: ${stats.might || 0}</div>`
           : '';
 
         item.innerHTML = artHtml + `
           <div class="card-details">
-            <h3 class="card-name">${escapeHtml(card.name || 'Unnamed')}</h3>
-            <div class="card-meta">${badges}</div>
+            <div class="card-name">${card.name || 'Unnamed'}</div>
+            <div class="card-meta">${badges.join('')}</div>
             ${statsHtml}
-            ${card.description ? `<p class="card-desc">${escapeHtml(card.description)}</p>` : ''}
+            ${card.description ? `<div class="card-desc">${card.description}</div>` : ''}
           </div>
         `;
+
         cardList.appendChild(item);
       }
-    }
-
-    function escapeHtml(value) {
-      const div = document.createElement('div');
-      div.textContent = value;
-      return div.innerHTML;
     }
 
     setSelect.addEventListener('change', (e) => {
@@ -254,10 +308,11 @@
       }
     });
 
-    // Load content on page load
-    fetchContent( if (currentPage > 1) fetchCards(currentPage - 1);
-    });
-    nextBtn.addEventListener('click', () => {
+    // Load on page load
+    fetchContent();
+  </script>
+</body>
+</html>
       if (currentPage < totalPages.value) fetchCards(currentPage + 1);
     });
   </script>
