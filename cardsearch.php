@@ -128,7 +128,11 @@
       nextBtn.disabled = true;
 
       try {
-        const response = await fetch(`https://api.riftcodex.com/api/cards?limit=${pageSize}&page=${page}&set_id=ogn`);
+        const response = await fetch(`https://api.riftcodex.com/api/cards?limit=${pageSize}&page=${page}&set_id=ogn`, {
+          headers: {
+            'X-Riot-Token': 'RGAPI-9af98452-0f95-4b24-a5de-0c8a91112c6c'
+          }
+        });
         if (!response.ok) {
           throw new Error(`HTTP ${response.status} ${response.statusText}`);
         }
