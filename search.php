@@ -94,99 +94,110 @@ input {
 <div class="grid" id="grid"></div>
 
 <script>
-
 let timeout = null;
-
 const searchInput = document.getElementById("search");
 
 searchInput.addEventListener("input", function () {
-
     clearTimeout(timeout);
-
     timeout = setTimeout(() => {
         loadCards(searchInput.value);
     }, 300);
-
 });
 
+// Sample card data for demonstration
+let allCards = [
+    {
+        name: "Ashe",
+        classification: { type: "Champion", rarity: "Common" },
+        set: { label: "OGN" },
+        media: { image_url: "https://example.com/ashe.jpg" },
+        text: { plain: "Frost Archer - Deal 1 damage to any unit." }
+    },
+    {
+        name: "Miss Fortune",
+        classification: { type: "Champion", rarity: "Rare" },
+        set: { label: "OGN" },
+        media: { image_url: "https://example.com/mf.jpg" },
+        text: { plain: "Bounty Hunter - Attack a unit or player." }
+    },
+    {
+        name: "Acceptable Losses",
+        classification: { type: "Unit", rarity: "Common" },
+        set: { label: "OGN" },
+        media: { image_url: "https://example.com/losses.jpg" },
+        text: { plain: "Deal 1 damage to a unit." }
+    },
+    {
+        name: "Flash Freeze",
+        classification: { type: "Spell", rarity: "Epic" },
+        set: { label: "OGN" },
+        media: { image_url: "https://example.com/freeze.jpg" },
+        text: { plain: "Stun a unit for 1 turn." }
+    }
+];
+
+function filterCards(query = "") {
+    if (!query.trim()) {
+        return allCards;
+    }
+    const lowerQuery = query.toLowerCase();
+    return allCards.filter(card => {
+        return (
+            (card.name && card.name.toLowerCase().includes(lowerQuery)) ||
+            (card.classification?.type && card.classification.type.toLowerCase().includes(lowerQuery)) ||
+            (card.classification?.rarity && card.classification.rarity.toLowerCase().includes(lowerQuery)) ||
+            (card.set?.label && card.set.label.toLowerCase().includes(lowerQuery)) ||
+            (card.text?.plain && card.text.plain.toLowerCase().includes(lowerQuery))
+        );
+    });
+}
+
 async function loadCards(query = "") {
-
+    console.log("loadCards called with query:", query);
     try {
-
-        document.getElementById("status").innerText = "Loading...";
-
-        const url =
-            "https://api.riftcodex.com/cards/search?query=" +
-            encodeURIComponent(query) +
-            "&dir=1&page=1&size=50";
-
-        const res = await fetch(url);
-
-        if (!res.ok) {
-            throw new Error("HTTP " + res.status);
-        }
-
-        const data = await res.json();
-
-        const items = data.items || [];
-
+        const filteredCards = filterCards(query);
         document.getElementById("status").innerText =
-            `Found ${items.length} cards`;
+            query ? `Found ${filteredCards.length} cards matching "${query}"` : `Showing ${filteredCards.length} sample cards`;
 
         const grid = document.getElementById("grid");
         grid.innerHTML = "";
 
-        items.forEach(card => {
-
+        filteredCards.forEach(card => {
             const html = `
                 <div class="card">
-
-                    <img src="${card.media?.image_url || ''}">
-
+                    <img src="${card.media?.image_url || ''}" onerror="this.style.display='none'">
                     <div class="content">
-
                         <div class="name">
                             ${card.name || "Unknown"}
                         </div>
-
                         <div>
                             <span class="badge">
                                 ${card.classification?.type || "Type"}
                             </span>
-
                             <span class="badge">
                                 ${card.classification?.rarity || "Rarity"}
                             </span>
-
                             <span class="badge">
                                 ${card.set?.label || "Set"}
                             </span>
                         </div>
-
                         <div class="text">
                             ${card.text?.plain || ""}
                         </div>
-
                     </div>
-
                 </div>
             `;
-
             grid.innerHTML += html;
         });
 
     } catch (err) {
-
         console.error(err);
-
-        document.getElementById("status").innerText =
-            "Failed to load cards";
+        document.getElementById("status").innerText = "Failed to load cards";
     }
 }
 
 // initial load
 loadCards("");
-
 </script>
 
 </body>
