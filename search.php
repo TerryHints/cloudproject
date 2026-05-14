@@ -1,53 +1,73 @@
 <?php
 
-$query = isset($_GET['q']) ? trim($_GET['q']) : '';
+// ---------------------------
+// API LAYER (FIXED)
+// ---------------------------
 
-function fetchCards() {
+function apiRequest($url) {
 
-    $url = "https://api.riftcodex.com/cards?size=200&page=1";
+    $ch = curl_init($url);
 
-    $context = stream_context_create([
-        'http' => [
-            'method' => 'GET',
-            'header' => 'User-Agent: Mozilla/5.0',
-            'timeout' => 15
+    curl_setopt_array($ch, [
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_TIMEOUT => 15,
+        CURLOPT_HTTPHEADER => [
+            "Accept: application/json",
+            "User-Agent: Mozilla/5.0"
         ]
     ]);
 
-    $response = file_get_contents($url, false, $context);
+    $res = curl_exec($ch);
+    $http = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
-    if ($response === false) {
+    curl_close($ch);
+
+    if ($res === false || $http !== 200) {
         return [];
     }
 
-    $data = json_decode($response, true);
+    return json_decode($res, true);
+}
+
+
+// ---------------------------
+// API FUNCTIONS
+// ---------------------------
+
+// Browse cards
+function getCards($page = 1, $size = 50) {
+
+    $url = "https://api.riftcodex.com/cards?page=$page&size=$size&dir=1";
+
+    $data = apiRequest($url);
 
     return $data['items'] ?? [];
 }
 
-$allCards = fetchCards();
+// Search cards (fuzzy)
+function searchCards($query, $page = 1, $size = 50) {
 
-$cards = $allCards;
+    $url = "https://api.riftcodex.com/cards/name?fuzzy=" .
+           urlencode($query) .
+           "&page=$page&size=$size";
 
-// SEARCH FILTER
+    $data = apiRequest($url);
+
+    return $data['items'] ?? $data['cards'] ?? [];
+}
+
+
+// ---------------------------
+// MAIN LOGIC
+// ---------------------------
+
+$query = $_GET['q'] ?? '';
+
 if (!empty($query)) {
-
-    $q = strtolower($query);
-
-    $cards = array_filter($allCards, function($card) use ($q) {
-
-        return (
-            stripos($card['name'] ?? '', $q) !== false ||
-            stripos($card['classification']['type'] ?? '', $q) !== false ||
-            stripos($card['classification']['rarity'] ?? '', $q) !== false ||
-            stripos($card['set']['label'] ?? '', $q) !== false ||
-            stripos($card['text']['plain'] ?? '', $q) !== false ||
-            stripos(implode(' ', $card['tags'] ?? []), $q) !== false
-        );
-
-    });
-
-    $cards = array_slice($cards, 0, 50);
+    $cards = searchCards($query, 1, 50);
+} else {
+    $cards = getCards(1, 50);
 }
 
 ?>
@@ -57,9 +77,10 @@ if (!empty($query)) {
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RiftCodex Card Search</title>
+<title>RiftCodex Cards</title>
 
 <style>
+
 body {
     margin: 0;
     padding: 20px;
@@ -81,9 +102,9 @@ form {
 input {
     flex: 1;
     padding: 12px;
+    font-size: 16px;
     border-radius: 10px;
     border: none;
-    font-size: 16px;
 }
 
 button {
@@ -102,12 +123,12 @@ button:hover {
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 18px;
+    gap: 16px;
 }
 
 .card {
     background: #111827;
-    border-radius: 14px;
+    border-radius: 12px;
     overflow: hidden;
     border: 1px solid rgba(255,255,255,0.08);
 }
@@ -154,57 +175,65 @@ button:hover {
 <h1>RiftCodex Card Search</h1>
 
 <form method="GET">
-    <input type="text" name="q"
-           placeholder="Search cards (Ashe, Unit, Rare, damage...)"
+    <input type="text"
+           name="q"
+           placeholder="Search cards (Ashe, Unit, Rare...)"
            value="<?php echo htmlspecialchars($query); ?>">
     <button type="submit">Search</button>
 </form>
 
 <div class="status">
+    Showing <?php echo count($cards); ?> cards
     <?php if (!empty($query)): ?>
-        Found <?php echo count($cards); ?> results for "<?php echo htmlspecialchars($query); ?>"
-    <?php else: ?>
-        Showing all cards
+        for "<?php echo htmlspecialchars($query); ?>"
     <?php endif; ?>
 </div>
 
 <div class="grid">
 
-<?php foreach ($cards as $card): ?>
+<?php if (!empty($cards)): ?>
 
-    <div class="card">
+    <?php foreach ($cards as $card): ?>
 
-        <img src="<?php echo htmlspecialchars($card['media']['image_url'] ?? ''); ?>">
+        <div class="card">
 
-        <div class="content">
+            <img src="<?php echo htmlspecialchars($card['media']['image_url'] ?? ''); ?>">
 
-            <div class="name">
-                <?php echo htmlspecialchars($card['name'] ?? 'Unknown'); ?>
-            </div>
+            <div class="content">
 
-            <div>
-                <span class="badge">
-                    <?php echo htmlspecialchars($card['classification']['type'] ?? 'Type'); ?>
-                </span>
+                <div class="name">
+                    <?php echo htmlspecialchars($card['name'] ?? 'Unknown'); ?>
+                </div>
 
-                <span class="badge">
-                    <?php echo htmlspecialchars($card['classification']['rarity'] ?? 'Rarity'); ?>
-                </span>
+                <div>
+                    <span class="badge">
+                        <?php echo htmlspecialchars($card['classification']['type'] ?? 'Type'); ?>
+                    </span>
 
-                <span class="badge">
-                    <?php echo htmlspecialchars($card['set']['label'] ?? 'Set'); ?>
-                </span>
-            </div>
+                    <span class="badge">
+                        <?php echo htmlspecialchars($card['classification']['rarity'] ?? 'Rarity'); ?>
+                    </span>
 
-            <div class="text">
-                <?php echo htmlspecialchars($card['text']['plain'] ?? ''); ?>
+                    <span class="badge">
+                        <?php echo htmlspecialchars($card['set']['label'] ?? 'Set'); ?>
+                    </span>
+                </div>
+
+                <div class="text">
+                    <?php echo htmlspecialchars($card['text']['plain'] ?? ''); ?>
+                </div>
+
             </div>
 
         </div>
 
-    </div>
+    <?php endforeach; ?>
 
-<?php endforeach; ?>
+<?php else: ?>
+
+    <p style="color:#94a3b8;">No cards found.</p>
+
+<?php endif; ?>
 
 </div>
 
