@@ -1,8 +1,8 @@
 <?php
 
-$query = $_GET['q'] ?? '';
+$q = $_GET['q'] ?? '';
 
-function fetch($url) {
+function api($url) {
 
     $ch = curl_init();
 
@@ -23,19 +23,21 @@ function fetch($url) {
     return json_decode($res, true);
 }
 
-if (trim($query) !== '') {
+// Decide mode
+if (trim($q) !== '') {
 
-    // 🔥 PROPER SEARCH MODE
+    // 🔥 SEARCH MODE (correct API usage)
     $url = "https://api.riftcodex.com/cards/name?fuzzy=" .
-           urlencode($query);
+           urlencode($q) .
+           "&size=50";
 
 } else {
 
     // 📚 BROWSE MODE
-    $url = "https://api.riftcodex.com/cards/search?query=&dir=1&page=1&size=200";
+    $url = "https://api.riftcodex.com/cards/search?query=&dir=1&page=1&size=50";
 }
 
-$data = fetch($url);
+$data = api($url);
 
 $cards = $data['items'] ?? [];
 
@@ -45,7 +47,7 @@ $cards = $data['items'] ?? [];
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Card Search</title>
+<title>RiftCodex Cards</title>
 
 <style>
 body {
@@ -86,6 +88,7 @@ input {
 
 .name {
     font-weight: bold;
+    margin-bottom: 6px;
 }
 
 .badge {
@@ -107,7 +110,7 @@ input {
     <input type="text"
            name="q"
            placeholder="Search cards..."
-           value="<?php echo htmlspecialchars($query); ?>">
+           value="<?php echo htmlspecialchars($q); ?>">
 </form>
 
 <p>Found <?php echo count($cards); ?> cards</p>
