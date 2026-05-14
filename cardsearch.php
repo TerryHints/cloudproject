@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Riftbound Cards</title>
+  <title>Riftcodex Card Browser</title>
   <style>
     * {
       margin: 0;
@@ -67,27 +67,39 @@
       display: flex;
       gap: 12px;
       margin-bottom: 24px;
+      flex-wrap: wrap;
       align-items: center;
     }
 
-    #set-select {
-      padding: 10px 14px;
+    .controls select,
+    .controls button {
       border: 1px solid #d1d5db;
       border-radius: 8px;
+      padding: 10px 14px;
       font-size: 1rem;
+    }
+
+    .controls button {
+      background: #1d4ed8;
+      color: #ffffff;
       cursor: pointer;
-      flex: 1;
-      max-width: 300px;
+      border-color: transparent;
+      font-weight: 600;
+    }
+
+    .controls button:disabled {
+      opacity: 0.55;
+      cursor: default;
     }
 
     #message {
-      padding: 12px 16px;
+      padding: 14px 16px;
       margin-bottom: 20px;
-      background: #f0fdf4;
-      border-left: 4px solid #22c55e;
-      border-radius: 4px;
-      color: #166534;
-      font-size: 0.95rem;
+      background: #f8fafc;
+      border-left: 4px solid #3b82f6;
+      border-radius: 8px;
+      color: #334155;
+      line-height: 1.5;
     }
 
     .card-list {
@@ -97,40 +109,19 @@
 
     .card-item {
       display: grid;
-      grid-template-columns: 90px 1fr;
-      gap: 16px;
-      padding: 16px;
+      gap: 12px;
+      padding: 18px;
       border: 1px solid #e5e7eb;
-      border-radius: 10px;
-      background: #f9fafb;
-      transition: box-shadow 0.2s;
+      border-radius: 12px;
+      background: #ffffff;
     }
 
-    .card-item:hover {
-      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-    }
-
-    .card-art {
-      width: 90px;
-      height: 120px;
-      border-radius: 6px;
-      background: #e5e7eb;
-      overflow: hidden;
+    .card-header {
       display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 10px;
       align-items: center;
-      justify-content: center;
-    }
-
-    .card-art img {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-    }
-
-    .card-details {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
     }
 
     .card-name {
@@ -139,57 +130,32 @@
       color: #0f172a;
     }
 
-    .card-meta {
+    .meta-row {
       display: flex;
-      gap: 8px;
+      gap: 10px;
       flex-wrap: wrap;
-    }
-
-    .badge {
-      display: inline-block;
-      padding: 4px 10px;
-      background: #dbeafe;
-      color: #1e40af;
-      border-radius: 4px;
-      font-size: 0.8rem;
-      font-weight: 600;
-    }
-
-    .badge.rarity {
-      background: #fef3c7;
-      color: #b45309;
-    }
-
-    .badge.faction {
-      background: #ddd6fe;
-      color: #5b21b6;
-    }
-
-    .card-stats {
-      font-size: 0.9rem;
       color: #475569;
+      font-size: 0.9rem;
+    }
+
+    .meta-pill {
+      background: #eef2ff;
+      color: #3730a3;
+      padding: 5px 10px;
+      border-radius: 999px;
+      font-size: 0.85rem;
     }
 
     .card-desc {
-      font-size: 0.9rem;
-      color: #64748b;
-      line-height: 1.5;
-      margin-top: 4px;
+      color: #475569;
+      line-height: 1.6;
+      margin-top: 6px;
     }
 
-    @media (max-width: 768px) {
+    @media (max-width: 720px) {
       .page {
-        margin-top: 90px;
-        padding: 20px;
-      }
-
-      .card-item {
-        grid-template-columns: 1fr;
-      }
-
-      .card-art {
-        width: 100%;
-        height: 150px;
+        margin: 100px 16px 40px;
+        padding: 22px;
       }
     }
   </style>
@@ -201,130 +167,191 @@
   </nav>
 
   <div class="page">
-    <h1>Riftbound Cards</h1>
-    <p class="lead">Browse all cards from the Riftbound game. Select a set to view cards.</p>
+    <h1>Riftcodex Card Browser</h1>
+    <p class="lead">Load set data from <strong>https://api.riftcodex.com</strong> and browse cards by set.</p>
 
     <div class="controls">
       <select id="set-select">
-        <option value="">-- Loading sets --</option>
+        <option value="">Loading available sets...</option>
       </select>
+      <button id="refresh-sets" type="button">Refresh Sets</button>
     </div>
 
-    <p id="message">Loading content...</p>
+    <div class="controls">
+      <button id="load-cards" type="button" disabled>Load Cards</button>
+      <button id="prev-page" type="button" disabled>Previous</button>
+      <button id="next-page" type="button" disabled>Next</button>
+    </div>
+
+    <p id="message">Select a set and click Load Cards.</p>
     <div id="card-list" class="card-list"></div>
   </div>
 
   <script>
+    const baseUrl = 'https://api.riftcodex.com';
+    const setSelect = document.getElementById('set-select');
+    const refreshSetsBtn = document.getElementById('refresh-sets');
+    const loadCardsBtn = document.getElementById('load-cards');
+    const prevPageBtn = document.getElementById('prev-page');
+    const nextPageBtn = document.getElementById('next-page');
     const message = document.getElementById('message');
     const cardList = document.getElementById('card-list');
-    const setSelect = document.getElementById('set-select');
-    let allSets = [];
 
-    async function fetchContent() {
-      const url = 'https://api.riftcodex.com/riftbound/content/v1/content';
-      console.log('Fetching from:', url);
-      
+    let availableSets = [];
+    let currentPage = 1;
+    let currentSetId = '';
+    let totalCards = 0;
+    const pageSize = 20;
+
+    async function fetchJson(url) {
+      const response = await fetch(url);
+      if (!response.ok) {
+        const body = await response.text();
+        throw new Error(`HTTP ${response.status} ${response.statusText}: ${body}`);
+      }
+      return response.json();
+    }
+
+    async function fetchSets() {
+      const endpoints = [`${baseUrl}/sets`, `${baseUrl}/api/sets`];
+      setSelect.innerHTML = '<option value="">Loading available sets...</option>';
+      setSelect.disabled = true;
+      loadCardsBtn.disabled = true;
+      message.textContent = 'Fetching available sets from the API...';
+      cardList.innerHTML = '';
+
       try {
-        const response = await fetch(url, {
-          headers: {
-            'X-Riot-Token': 'RGAPI-9af98452-0f95-4b24-a5de-0c8a91112c6c'
+        let data = null;
+        let usedUrl = '';
+
+        for (const endpoint of endpoints) {
+          try {
+            data = await fetchJson(endpoint);
+            usedUrl = endpoint;
+            break;
+          } catch (innerError) {
+            console.warn('Set endpoint failed:', endpoint, innerError.message);
           }
-        });
-
-        console.log('Response status:', response.status, response.statusText);
-
-        if (!response.ok) {
-          const errorText = await response.text();
-          console.error('Error response:', errorText);
-          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
-        const data = await response.json();
-        console.log('Data received:', data);
-        
-        allSets = data.sets || [];
+        if (!data) {
+          throw new Error(`Could not load sets from ${endpoints.join(' or ')}`);
+        }
 
-        if (!allSets.length) {
-          message.textContent = 'No sets found.';
+        availableSets = Array.isArray(data) ? data : data.sets || [];
+        if (!availableSets.length) {
+          setSelect.innerHTML = '<option value="">No sets found</option>';
+          message.textContent = `No sets were returned by the API (tried ${usedUrl}).`;
           return;
         }
 
         setSelect.innerHTML = '<option value="">-- Select a set --</option>';
-        allSets.forEach((set, index) => {
+        availableSets.forEach((set) => {
+          const id = set.id || set.set_id || set.key || set.name || '';
+          const label = set.name || set.id || set.set_id || '(Unnamed)';
+          const count = set.card_count || (Array.isArray(set.cards) ? set.cards.length : '-');
           const option = document.createElement('option');
-          option.value = index;
-          option.textContent = `${set.name} (${set.cards?.length || 0} cards)`;
+          option.value = id;
+          option.textContent = `${label} (${count} cards)`;
           setSelect.appendChild(option);
         });
 
-        message.textContent = `Loaded ${allSets.length} sets. Select one to view cards.`;
+        message.textContent = 'Select a set and click Load Cards.';
+        setSelect.disabled = false;
       } catch (error) {
-        console.error('Fetch error:', error);
-        message.textContent = `Error: ${error.message} — Check browser console for details.`;
+        message.textContent = `Failed to load sets: ${error.message}`;
+        console.error(error);
       }
     }
 
-    function displaySetCards(setIndex) {
-      const set = allSets[setIndex];
-      if (!set) return;
-
-      cardList.innerHTML = '';
-      const cards = set.cards || [];
-
-      if (!cards.length) {
-        message.textContent = `No cards in ${set.name}.`;
+    async function fetchCards(page = 1) {
+      if (!currentSetId) {
+        message.textContent = 'Choose a set first.';
         return;
       }
 
-      message.textContent = `Showing ${cards.length} cards from ${set.name}`;
+      cardList.innerHTML = '';
+      message.textContent = 'Loading cards...';
+      loadCardsBtn.disabled = true;
+      prevPageBtn.disabled = true;
+      nextPageBtn.disabled = true;
 
-      for (const card of cards) {
-        const item = document.createElement('div');
-        item.className = 'card-item';
+      try {
+        const url = `${baseUrl}/api/cards?limit=${pageSize}&page=${page}&set_id=${encodeURIComponent(currentSetId)}`;
+        const response = await fetch(url);
 
-        const artHtml = card.art?.thumbnailURL
-          ? `<div class="card-art"><img src="${card.art.thumbnailURL}" alt="${card.name}" loading="lazy"></div>`
-          : `<div class="card-art"></div>`;
+        if (!response.ok) {
+          const body = await response.text();
+          throw new Error(`HTTP ${response.status} ${response.statusText}: ${body}`);
+        }
 
-        const badges = [];
-        if (card.type) badges.push(`<span class="badge">${card.type}</span>`);
-        if (card.rarity) badges.push(`<span class="badge rarity">${card.rarity}</span>`);
-        if (card.faction) badges.push(`<span class="badge faction">${card.faction}</span>`);
+        const data = await response.json();
+        const items = Array.isArray(data.items) ? data.items : [];
+        totalCards = Number(data.total || items.length);
+        currentPage = page;
 
-        const stats = card.stats;
-        const statsHtml = stats
-          ? `<div class="card-stats">Cost: ${stats.cost || 0} | Power: ${stats.power || 0} | Might: ${stats.might || 0}</div>`
-          : '';
+        if (!items.length) {
+          message.textContent = 'No cards were returned for this page.';
+          return;
+        }
 
-        item.innerHTML = artHtml + `
-          <div class="card-details">
-            <div class="card-name">${card.name || 'Unnamed'}</div>
-            <div class="card-meta">${badges.join('')}</div>
-            ${statsHtml}
-            ${card.description ? `<div class="card-desc">${card.description}</div>` : ''}
-          </div>
-        `;
+        const totalPages = Math.max(1, Math.ceil(totalCards / pageSize));
+        message.textContent = `Showing ${items.length} cards from page ${currentPage} of ${totalPages} (${totalCards} total).`;
 
-        cardList.appendChild(item);
+        items.forEach((card) => {
+          const item = document.createElement('div');
+          item.className = 'card-item';
+
+          const cardName = card.name || 'Unnamed card';
+          const cardSet = card.set || currentSetId;
+          const badgeList = [];
+          if (card.type) badgeList.push(`<span class="meta-pill">${escapeHtml(card.type)}</span>`);
+          if (card.rarity) badgeList.push(`<span class="meta-pill">${escapeHtml(card.rarity)}</span>`);
+          if (card.faction) badgeList.push(`<span class="meta-pill">${escapeHtml(card.faction)}</span>`);
+
+          item.innerHTML = `
+            <div class="card-header">
+              <div class="card-name">${escapeHtml(cardName)}</div>
+              <div class="meta-row">
+                <span class="meta-pill">Set: ${escapeHtml(cardSet)}</span>
+                ${badgeList.join('')}
+              </div>
+            </div>
+            ${card.description ? `<div class="card-desc">${escapeHtml(card.description)}</div>` : ''}
+          `;
+
+          cardList.appendChild(item);
+        });
+
+        prevPageBtn.disabled = currentPage <= 1;
+        nextPageBtn.disabled = currentPage >= Math.ceil(totalCards / pageSize);
+      } catch (error) {
+        message.textContent = `Failed to load cards: ${error.message}`;
+        console.error(error);
+      } finally {
+        loadCardsBtn.disabled = false;
       }
     }
 
-    setSelect.addEventListener('change', (e) => {
-      if (e.target.value === '') {
-        cardList.innerHTML = '';
-        message.textContent = 'Select a set to view cards.';
-      } else {
-        displaySetCards(parseInt(e.target.value));
-      }
+    function escapeHtml(value) {
+      const span = document.createElement('span');
+      span.textContent = value;
+      return span.innerHTML;
+    }
+
+    setSelect.addEventListener('change', () => {
+      currentSetId = setSelect.value;
+      loadCardsBtn.disabled = !currentSetId;
+      cardList.innerHTML = '';
+      message.textContent = currentSetId ? 'Ready to load cards.' : 'Select a set and click Load Cards.';
     });
 
-    // Load on page load
-    fetchContent();
-  </script>
-</body>
-</html>
-      if (currentPage < totalPages.value) fetchCards(currentPage + 1);
-    });
+    refreshSetsBtn.addEventListener('click', fetchSets);
+    loadCardsBtn.addEventListener('click', () => fetchCards(1));
+    prevPageBtn.addEventListener('click', () => fetchCards(Math.max(1, currentPage - 1)));
+    nextPageBtn.addEventListener('click', () => fetchCards(currentPage + 1));
+
+    fetchSets();
   </script>
 </body>
 </html>
