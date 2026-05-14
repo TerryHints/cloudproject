@@ -152,7 +152,7 @@ async function loadCards(){
     try{
 
         const response = await fetch(
-            'https://api.riftcodex.com/cards?dir=1&page=1&size=50'
+            'https://api.riftcodex.com/cards?dir=1&page=1&size=100'
         );
 
         if(!response.ok){
