@@ -124,6 +124,12 @@ h1{
 </style>
 </head>
 <body>
+    <nav>
+    <a href="home2.php">Home</a>
+    <a href="logout.php">Logout</a>
+    <a href="#">TBD</a>
+    <a href="#">TBD</a>
+</nav>
 
 <h1>RiftCodex Cards</h1>
 
