@@ -221,18 +221,27 @@
     let allSets = [];
 
     async function fetchContent() {
+      const url = 'https://api.riftcodex.com/riftbound/content/v1/content';
+      console.log('Fetching from:', url);
+      
       try {
-        const response = await fetch('https://api.riftcodex.com/riftbound/content/v1/content', {
+        const response = await fetch(url, {
           headers: {
             'X-Riot-Token': 'RGAPI-9af98452-0f95-4b24-a5de-0c8a91112c6c'
           }
         });
 
+        console.log('Response status:', response.status, response.statusText);
+
         if (!response.ok) {
-          throw new Error(`HTTP ${response.status} ${response.statusText}`);
+          const errorText = await response.text();
+          console.error('Error response:', errorText);
+          throw new Error(`HTTP ${response.status}: ${response.statusText}`);
         }
 
         const data = await response.json();
+        console.log('Data received:', data);
+        
         allSets = data.sets || [];
 
         if (!allSets.length) {
@@ -250,7 +259,8 @@
 
         message.textContent = `Loaded ${allSets.length} sets. Select one to view cards.`;
       } catch (error) {
-        message.textContent = `Error: ${error.message}`;
+        console.error('Fetch error:', error);
+        message.textContent = `Error: ${error.message} — Check browser console for details.`;
       }
     }
 
