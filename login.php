@@ -1,4 +1,6 @@
 <?php
+session_start();
+
 require 'vendor/autoload.php';
 require 'db_config.php';
 use Aws\DynamoDb\DynamoDbClient;
@@ -23,7 +25,6 @@ try {
         $item = $result['Items'][0];
         $storedHash = $item['password']['S'];
         if (password_verify($_POST['password'], $storedHash)) {
-            session_start();
             $_SESSION['username'] = $username;
             header("Location: home2.php");
             exit();
