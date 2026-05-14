@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RiftCodex Search</title>
+<meta name="viewport" content="width=device-width, initial-scale="1.0">
+<title>RiftCodex Card Search</title>
 
 <style>
 body {
@@ -18,23 +18,24 @@ h1 {
     margin-bottom: 10px;
 }
 
-.search-box {
-    margin-bottom: 20px;
-}
-
 input {
     width: 100%;
     padding: 12px;
     border-radius: 10px;
     border: none;
-    outline: none;
     font-size: 16px;
+    margin-bottom: 15px;
+}
+
+#status {
+    margin-bottom: 15px;
+    color: #94a3b8;
 }
 
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 18px;
+    gap: 16px;
 }
 
 .card {
@@ -46,7 +47,6 @@ input {
 
 .card img {
     width: 100%;
-    display: block;
 }
 
 .content {
@@ -55,39 +55,36 @@ input {
 
 .name {
     font-weight: bold;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 }
 
 .badge {
-    font-size: 12px;
+    display: inline-block;
     background: #1f2937;
     padding: 4px 8px;
     border-radius: 999px;
-    display: inline-block;
-    margin-right: 6px;
-    margin-bottom: 6px;
+    font-size: 12px;
+    margin: 2px;
 }
 
 .text {
     font-size: 13px;
     color: #cbd5e1;
-    margin-top: 10px;
-    line-height: 1.4;
-}
-
-#status {
-    margin-bottom: 15px;
-    color: #94a3b8;
+    margin-top: 8px;
 }
 </style>
 </head>
 <body>
+<body>
+    <nav>
+    <a href="home2.php">Home</a>
+    <a href="logout.php">Logout</a>
+    <a href="#">TBD</a>
+    <a href="#">TBD</a>
+</nav>
+<h1>Card Search</h1>
 
-<h1>RiftCodex Card Search</h1>
-
-<div class="search-box">
-    <input type="text" id="search" placeholder="Search cards (e.g. Ashe, Unit, Rare...)">
-</div>
+<input type="text" id="search" placeholder="Search cards...">
 
 <div id="status">Loading...</div>
 
@@ -95,97 +92,131 @@ input {
 
 <script>
 
+let cache = [];
 let timeout = null;
 
 const searchInput = document.getElementById("search");
 
-searchInput.addEventListener("input", function () {
+searchInput.addEventListener("input", () => {
 
     clearTimeout(timeout);
 
     timeout = setTimeout(() => {
-        loadCards(searchInput.value);
-    }, 300);
+        render(searchInput.value);
+    }, 250);
 
 });
 
-async function loadCards(query = "") {
+async function loadCards() {
 
-    try {
+    const res = await fetch(
+        "https://api.riftcodex.com/cards/search?query=&dir=1&page=1&size=200"
+    );
 
-        document.getElementById("status").innerText = "Loading...";
+    const data = await res.json();
 
-        const url =
-            "https://api.riftcodex.com/cards/search?query=" +
-            encodeURIComponent(query) +
-            "&dir=1&page=1&size=50";
+    cache = data.items || [];
 
-        const res = await fetch(url);
+    document.getElementById("status").innerText =
+        "Loaded " + cache.length + " cards";
 
-        if (!res.ok) {
-            throw new Error("HTTP " + res.status);
-        }
+    render("");
+}
 
-        const data = await res.json();
+function scoreCard(card, q) {
 
-        const items = data.items || [];
+    let score = 0;
 
-        document.getElementById("status").innerText =
-            `Found ${items.length} cards`;
+    const name = (card.name || "").toLowerCase();
+    const type = (card.classification?.type || "").toLowerCase();
+    const rarity = (card.classification?.rarity || "").toLowerCase();
+    const set = (card.set?.label || "").toLowerCase();
+    const text = (card.text?.plain || "").toLowerCase();
+    const tags = (card.tags || []).join(" ").toLowerCase();
 
-        const grid = document.getElementById("grid");
-        grid.innerHTML = "";
+    // exact name match = strongest
+    if (name === q) score += 100;
 
-        items.forEach(card => {
+    // name contains query
+    if (name.includes(q)) score += 50;
 
-            const html = `
-                <div class="card">
+    // tags match
+    if (tags.includes(q)) score += 30;
 
-                    <img src="${card.media?.image_url || ''}">
+    // type / rarity / set
+    if (type.includes(q)) score += 20;
+    if (rarity.includes(q)) score += 15;
+    if (set.includes(q)) score += 15;
 
-                    <div class="content">
+    // text match (weak)
+    if (text.includes(q)) score += 5;
 
-                        <div class="name">
-                            ${card.name || "Unknown"}
-                        </div>
+    return score;
+}
 
-                        <div>
-                            <span class="badge">
-                                ${card.classification?.type || "Type"}
-                            </span>
+function render(query) {
 
-                            <span class="badge">
-                                ${card.classification?.rarity || "Rarity"}
-                            </span>
+    const q = query.toLowerCase().trim();
 
-                            <span class="badge">
-                                ${card.set?.label || "Set"}
-                            </span>
-                        </div>
+    let results = cache;
 
-                        <div class="text">
-                            ${card.text?.plain || ""}
-                        </div>
+    if (q.length > 0) {
 
+        results = cache
+            .map(card => ({
+                card,
+                score: scoreCard(card, q)
+            }))
+            .filter(x => x.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .map(x => x.card);
+    }
+
+    document.getElementById("status").innerText =
+        "Found " + results.length + " cards";
+
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+
+    results.forEach(card => {
+
+        grid.innerHTML += `
+            <div class="card">
+
+                <img src="${card.media?.image_url || ''}">
+
+                <div class="content">
+
+                    <div class="name">
+                        ${card.name || "Unknown"}
+                    </div>
+
+                    <div>
+                        <span class="badge">
+                            ${card.classification?.type || "Type"}
+                        </span>
+
+                        <span class="badge">
+                            ${card.classification?.rarity || "Rarity"}
+                        </span>
+
+                        <span class="badge">
+                            ${card.set?.label || "Set"}
+                        </span>
+                    </div>
+
+                    <div class="text">
+                        ${card.text?.plain || ""}
                     </div>
 
                 </div>
-            `;
 
-            grid.innerHTML += html;
-        });
-
-    } catch (err) {
-
-        console.error(err);
-
-        document.getElementById("status").innerText =
-            "Failed to load cards";
-    }
+            </div>
+        `;
+    });
 }
 
-// initial load
-loadCards("");
+loadCards();
 
 </script>
 
