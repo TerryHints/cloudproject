@@ -1,55 +1,34 @@
 <?php
+// Fetch cards once
+$url = "https://api.riftcodex.com/cards/search?query=&dir=1&page=1&size=200";
 
-$q = $_GET['q'] ?? '';
+$ch = curl_init($url);
 
-function api($url) {
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_HTTPHEADER => [
+        "Accept: application/json",
+        "User-Agent: Mozilla/5.0"
+    ]
+]);
 
-    $ch = curl_init();
+$response = curl_exec($ch);
+curl_close($ch);
 
-    curl_setopt_array($ch, [
-        CURLOPT_URL => $url,
-        CURLOPT_RETURNTRANSFER => true,
-        CURLOPT_FOLLOWLOCATION => true,
-        CURLOPT_TIMEOUT => 20,
-        CURLOPT_HTTPHEADER => [
-            "Accept: application/json",
-            "User-Agent: Mozilla/5.0"
-        ]
-    ]);
-
-    $res = curl_exec($ch);
-    curl_close($ch);
-
-    return json_decode($res, true);
-}
-
-// Decide mode
-if (trim($q) !== '') {
-
-    // 🔥 SEARCH MODE (correct API usage)
-    $url = "https://api.riftcodex.com/cards/name?fuzzy=" .
-           urlencode($q) .
-           "&size=50";
-
-} else {
-
-    // 📚 BROWSE MODE
-    $url = "https://api.riftcodex.com/cards/search?query=&dir=1&page=1&size=50";
-}
-
-$data = api($url);
+$data = json_decode($response, true);
 
 $cards = $data['items'] ?? [];
-
 ?>
 
 <!DOCTYPE html>
 <html>
 <head>
 <meta charset="UTF-8">
-<title>RiftCodex Cards</title>
+<title>RiftCodex Live Search</title>
 
 <style>
+
 body {
     font-family: Arial;
     background: #0f172a;
@@ -99,27 +78,26 @@ input {
     font-size: 12px;
     margin: 2px;
 }
+
+.hidden {
+    display: none;
+}
+
 </style>
 </head>
-
 <body>
 
 <h1>Card Search</h1>
 
-<form method="GET">
-    <input type="text"
-           name="q"
-           placeholder="Search cards..."
-           value="<?php echo htmlspecialchars($q); ?>">
-</form>
+<input type="text" id="search" placeholder="Search cards...">
 
-<p>Found <?php echo count($cards); ?> cards</p>
+<p id="count">Showing <?php echo count($cards); ?> cards</p>
 
 <div class="grid">
 
 <?php foreach ($cards as $card): ?>
 
-    <div class="card">
+    <div class="card searchable">
 
         <img src="<?php echo $card['media']['image_url'] ?? ''; ?>">
 
@@ -129,18 +107,20 @@ input {
                 <?php echo htmlspecialchars($card['name'] ?? 'Unknown'); ?>
             </div>
 
-            <div>
-                <span class="badge">
+            <div class="meta">
+
+                <span class="badge type">
                     <?php echo $card['classification']['type'] ?? ''; ?>
                 </span>
 
-                <span class="badge">
+                <span class="badge rarity">
                     <?php echo $card['classification']['rarity'] ?? ''; ?>
                 </span>
 
-                <span class="badge">
+                <span class="badge set">
                     <?php echo $card['set']['label'] ?? ''; ?>
                 </span>
+
             </div>
 
         </div>
@@ -150,6 +130,37 @@ input {
 <?php endforeach; ?>
 
 </div>
+
+<script>
+
+const input = document.getElementById("search");
+const cards = document.querySelectorAll(".searchable");
+const count = document.getElementById("count");
+
+input.addEventListener("input", function () {
+
+    const q = this.value.toLowerCase().trim();
+
+    let visible = 0;
+
+    cards.forEach(card => {
+
+        const text = card.innerText.toLowerCase();
+
+        if (text.includes(q)) {
+            card.classList.remove("hidden");
+            visible++;
+        } else {
+            card.classList.add("hidden");
+        }
+
+    });
+
+    count.innerText = "Showing " + visible + " cards";
+
+});
+
+</script>
 
 </body>
 </html>
