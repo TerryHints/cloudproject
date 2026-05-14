@@ -6,6 +6,15 @@
 <title>RiftCodex Search</title>
 
 <style>
+            body { font-family: Arial, sans-serif; margin: 0; line-height: 1.6; }
+        header { background: #333; color: #fff; padding: 1rem; text-align: center; }
+        nav { display: flex; justify-content: center; background: #444; padding: 0.5rem; position: relative; }
+        nav a { color: white; margin: 0 15px; text-decoration: none; }
+        .hero { padding: 50px; text-align: center; background: #f4f4f4; }
+        .container { padding: 20px; max-width: 800px; margin: auto; }
+        footer { background: #333; color: #fff; text-align: center; padding: 10px; position: fixed; bottom: 0; width: 100%; }
+        h1 { margin: 0; }
+        h1 { margin: 0; }
 body {
     margin: 0;
     padding: 20px;
@@ -83,7 +92,14 @@ input {
 </head>
 <body>
 
-<h1>RiftCodex Card Search</h1>
+<h1>Riftbound Card Search</h1>
+
+<nav>
+    <a href="home2.php">Home</a>
+    <a href="logout.php">Logout</a>
+    <a href="search.php">Search</a>
+    <a href="#">TBD</a>
+</nav>
 
 <div class="search-box">
     <input type="text" id="search" placeholder="Search cards (e.g. Ashe, Unit, Rare...)">
