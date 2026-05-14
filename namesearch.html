@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Name Search</title>
+
+<style>
+body {
+    font-family: Arial;
+    background: #0f172a;
+    color: white;
+    padding: 20px;
+}
+
+input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 10px;
+    border: none;
+    font-size: 16px;
+    margin-bottom: 20px;
+}
+
+.grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+    gap: 15px;
+}
+
+.card {
+    background: #111827;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.card img {
+    width: 100%;
+}
+
+.content {
+    padding: 10px;
+}
+
+.name {
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.badge {
+    font-size: 12px;
+    background: #1f2937;
+    padding: 3px 8px;
+    border-radius: 999px;
+    margin-right: 5px;
+}
+</style>
+</head>
+
+<body>
+
+<h1>Card Name Search</h1>
+
+<input type="text" id="search" placeholder="Search by name...">
+
+<div id="status">Type to search</div>
+<div class="grid" id="grid"></div>
+
+<script>
+
+let timeout;
+
+document.getElementById("search").addEventListener("input", (e) => {
+
+    clearTimeout(timeout);
+
+    timeout = setTimeout(() => {
+        searchCards(e.target.value);
+    }, 300);
+
+});
+
+async function searchCards(query) {
+
+    query = query.trim();
+
+    if (query.length < 2) {
+        document.getElementById("grid").innerHTML = "";
+        document.getElementById("status").innerText = "Type at least 2 characters";
+        return;
+    }
+
+    let items = [];
+
+    // 🔵 try exact first
+    let res = await fetch(
+        "https://api.riftcodex.com/cards/name?exact=" + encodeURIComponent(query)
+    );
+
+    let data = await res.json();
+    items = data.items || [];
+
+    // 🟡 fallback fuzzy
+    if (items.length === 0) {
+
+        res = await fetch(
+            "https://api.riftcodex.com/cards/name?fuzzy=" + encodeURIComponent(query)
+        );
+
+        data = await res.json();
+        items = data.items || [];
+    }
+
+    document.getElementById("status").innerText =
+        `Found ${items.length} cards`;
+
+    const grid = document.getElementById("grid");
+    grid.innerHTML = "";
+
+    items.forEach(card => {
+
+        grid.innerHTML += `
+            <div class="card">
+                <img src="${card.media?.image_url || ''}">
+                <div class="content">
+                    <div class="name">${card.name}</div>
+                    <div>
+                        <span class="badge">${card.classification?.type || ''}</span>
+                        <span class="badge">${card.classification?.rarity || ''}</span>
+                    </div>
+                </div>
+            </div>
+        `;
+    });
+
+}
+
+</script>
+
+</body>
+</html>

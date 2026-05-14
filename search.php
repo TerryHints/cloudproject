@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>RiftCodex Search</title>
+<title>Riftbound CARD TEXT Search</title>
 
 <style>
             body { font-family: Arial, sans-serif; margin: 0; line-height: 1.6; }
@@ -98,7 +98,7 @@ input {
     <a href="home2.php">Home</a>
     <a href="logout.php">Logout</a>
     <a href="search.php">Search</a>
-    <a href="#">TBD</a>
+    <a href="namesearch.html">Name Search</a>
 </nav>
 
 <div class="search-box">
