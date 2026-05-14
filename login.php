@@ -37,4 +37,3 @@ try {
 } catch (Exception $e) {
     echo "<!DOCTYPE html><html><head><title>Login Error</title></head><body><p>Database Error: " . htmlspecialchars($e->getMessage()) . "</p><a href='login.html'>Back to Login</a></body></html>";
 }
-?>
