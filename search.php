@@ -1,164 +1,191 @@
-<?php
-// Fetch cards once
-$url = "https://api.riftcodex.com/cards/search?query=&dir=1&page=1&size=200";
-
-$ch = curl_init($url);
-
-curl_setopt_array($ch, [
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_HTTPHEADER => [
-        "Accept: application/json",
-        "User-Agent: Mozilla/5.0"
-    ]
-]);
-
-$response = curl_exec($ch);
-curl_close($ch);
-
-$data = json_decode($response, true);
-
-$cards = $data['items'] ?? [];
-?>
-
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>RiftCodex Live Search</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RiftCodex Search</title>
 
 <style>
-
 body {
+    margin: 0;
+    padding: 20px;
     font-family: Arial;
     background: #0f172a;
     color: white;
-    padding: 20px;
+}
+
+h1 {
+    margin-bottom: 10px;
+}
+
+.search-box {
+    margin-bottom: 20px;
 }
 
 input {
     width: 100%;
     padding: 12px;
-    font-size: 16px;
     border-radius: 10px;
     border: none;
-    margin-bottom: 15px;
+    outline: none;
+    font-size: 16px;
 }
 
 .grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 16px;
+    gap: 18px;
 }
 
 .card {
     background: #111827;
-    border-radius: 12px;
+    border-radius: 14px;
     overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.08);
 }
 
 .card img {
     width: 100%;
+    display: block;
 }
 
 .content {
-    padding: 10px;
+    padding: 12px;
 }
 
 .name {
     font-weight: bold;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
 }
 
 .badge {
-    display: inline-block;
+    font-size: 12px;
     background: #1f2937;
     padding: 4px 8px;
     border-radius: 999px;
-    font-size: 12px;
-    margin: 2px;
+    display: inline-block;
+    margin-right: 6px;
+    margin-bottom: 6px;
 }
 
-.hidden {
-    display: none;
+.text {
+    font-size: 13px;
+    color: #cbd5e1;
+    margin-top: 10px;
+    line-height: 1.4;
 }
 
+#status {
+    margin-bottom: 15px;
+    color: #94a3b8;
+}
 </style>
 </head>
 <body>
 
-<h1>Card Search</h1>
+<h1>RiftCodex Card Search</h1>
 
-<input type="text" id="search" placeholder="Search cards...">
-
-<p id="count">Showing <?php echo count($cards); ?> cards</p>
-
-<div class="grid">
-
-<?php foreach ($cards as $card): ?>
-
-    <div class="card searchable">
-
-        <img src="<?php echo $card['media']['image_url'] ?? ''; ?>">
-
-        <div class="content">
-
-            <div class="name">
-                <?php echo htmlspecialchars($card['name'] ?? 'Unknown'); ?>
-            </div>
-
-            <div class="meta">
-
-                <span class="badge type">
-                    <?php echo $card['classification']['type'] ?? ''; ?>
-                </span>
-
-                <span class="badge rarity">
-                    <?php echo $card['classification']['rarity'] ?? ''; ?>
-                </span>
-
-                <span class="badge set">
-                    <?php echo $card['set']['label'] ?? ''; ?>
-                </span>
-
-            </div>
-
-        </div>
-
-    </div>
-
-<?php endforeach; ?>
-
+<div class="search-box">
+    <input type="text" id="search" placeholder="Search cards (e.g. Ashe, Unit, Rare...)">
 </div>
+
+<div id="status">Loading...</div>
+
+<div class="grid" id="grid"></div>
 
 <script>
 
-const input = document.getElementById("search");
-const cards = document.querySelectorAll(".searchable");
-const count = document.getElementById("count");
+let timeout = null;
 
-input.addEventListener("input", function () {
+const searchInput = document.getElementById("search");
 
-    const q = this.value.toLowerCase().trim();
+searchInput.addEventListener("input", function () {
 
-    let visible = 0;
+    clearTimeout(timeout);
 
-    cards.forEach(card => {
-
-        const text = card.innerText.toLowerCase();
-
-        if (text.includes(q)) {
-            card.classList.remove("hidden");
-            visible++;
-        } else {
-            card.classList.add("hidden");
-        }
-
-    });
-
-    count.innerText = "Showing " + visible + " cards";
+    timeout = setTimeout(() => {
+        loadCards(searchInput.value);
+    }, 300);
 
 });
+
+async function loadCards(query = "") {
+
+    try {
+
+        document.getElementById("status").innerText = "Loading...";
+
+        const url =
+            "https://api.riftcodex.com/cards/search?query=" +
+            encodeURIComponent(query) +
+            "&dir=1&page=1&size=50";
+
+        const res = await fetch(url);
+
+        if (!res.ok) {
+            throw new Error("HTTP " + res.status);
+        }
+
+        const data = await res.json();
+
+        const items = data.items || [];
+
+        document.getElementById("status").innerText =
+            `Found ${items.length} cards`;
+
+        const grid = document.getElementById("grid");
+        grid.innerHTML = "";
+
+        items.forEach(card => {
+
+            const html = `
+                <div class="card">
+
+                    <img src="${card.media?.image_url || ''}">
+
+                    <div class="content">
+
+                        <div class="name">
+                            ${card.name || "Unknown"}
+                        </div>
+
+                        <div>
+                            <span class="badge">
+                                ${card.classification?.type || "Type"}
+                            </span>
+
+                            <span class="badge">
+                                ${card.classification?.rarity || "Rarity"}
+                            </span>
+
+                            <span class="badge">
+                                ${card.set?.label || "Set"}
+                            </span>
+                        </div>
+
+                        <div class="text">
+                            ${card.text?.plain || ""}
+                        </div>
+
+                    </div>
+
+                </div>
+            `;
+
+            grid.innerHTML += html;
+        });
+
+    } catch (err) {
+
+        console.error(err);
+
+        document.getElementById("status").innerText =
+            "Failed to load cards";
+    }
+}
+
+// initial load
+loadCards("");
 
 </script>
 
