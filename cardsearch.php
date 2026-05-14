@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Riftcodex Origins Card Search</title>
+  <title>Riftbound Cards</title>
   <style>
     body {
       margin: 0;
@@ -71,19 +71,59 @@
       border-radius: 14px;
       border: 1px solid #e2e8f0;
       background: #f8fafc;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
+      display: grid;
+      grid-template-columns: 80px 1fr;
       gap: 12px;
+      align-items: flex-start;
     }
-    .card-item strong {
+    .card-art {
+      width: 80px;
+      height: 100px;
+      border-radius: 6px;
+      background: #e5e7eb;
+      overflow: hidden;
+    }
+    .card-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+    .card-details {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+    .card-name {
       font-size: 1rem;
+      font-weight: 700;
       color: #0f172a;
+      margin: 0;
     }
-    .card-item span {
-      color: #475569;
-      font-size: 0.95rem;
-      white-space: nowrap;
+    .card-meta {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      font-size: 0.85rem;
+    }
+    .badge {
+      background: #dbeafe;
+      color: #1e40af;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-weight: 500;
+    }
+    .badge.rarity {
+      background: #fef3c7;
+      color: #b45309;
+    }
+    .badge.faction {
+      background: #ddd6fe;
+      color: #5b21b6;
+    }
+    .card-desc {
+      font-size: 0.9rem;
+      color: #64748b;
+      line-height: 1.4;
     }
     @media (max-width: 640px) {
       .controls {
@@ -100,35 +140,30 @@
   </style>
 </head>
 <body>
-  <div class="page">
-    <h1>Origins Set Cards</h1>
-    <p class="lead">This page fetches the first 20 cards from the Riftcodex Origins set (<strong>OGN</strong>) and displays them with pagination.</p>
+  <nav style="width: 100%; background: #333; padding: 1rem; position: fixed; top: 0; left: 0; display: flex; justify-content: center; gap: 20px; margin: 0;">
+    <a href="home2.php" style="color: white; text-decoration: none; font-weight: 500;">Home</a>
+    <a href="logout.php" style="color: white; text-decoration: none; font-weight: 500;">Logout</a>
+  </nav>
+  <div class="page" style="margin-top: 60px;">
+    <h1>Riftbound Cards</h1>
+    <p class="lead">Browse all cards from the Riftbound game. Select a set to view cards.</p>
     <div class="controls">
-      <button id="load-btn" type="button">Load Origins Cards</button>
-      <button id="prev-btn" type="button" disabled>Previous</button>
-      <button id="next-btn" type="button" disabled>Next</button>
+      <select id="set-select" style="padding: 12px 16px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 1rem; cursor: pointer;">
+        <option value="">-- Select a set --</option>
+      </select>
     </div>
-    <p id="message">Click "Load Origins Cards" to fetch the data.</p>
-    <div id="card-list" class="card-list"></div>
-  </div>
-  <script>
-    const pageSize = 20;
-    let currentPage = 1;
-    const totalPages = { value: 1 };
-    const message = document.getElementById('message');
+    <p id=message = document.getElementById('message');
     const cardList = document.getElementById('card-list');
-    const loadBtn = document.getElementById('load-btn');
-    const prevBtn = document.getElementById('prev-btn');
-    const nextBtn = document.getElementById('next-btn');
+    const setSelect = document.getElementById('set-select');
+    let allSets = [];
 
-    async function fetchCards(page = 1) {
-      message.textContent = 'Loading cards from the Origins set...';
+    async function fetchContent() {
+      message.textContent = 'Loading content...';
       cardList.innerHTML = '';
-      prevBtn.disabled = true;
-      nextBtn.disabled = true;
+      setSelect.disabled = true;
 
       try {
-        const response = await fetch(`https://api.riftcodex.com/api/cards?limit=${pageSize}&page=${page}&set_id=ogn`, {
+        const response = await fetch('https://api.riftcodex.com/riftbound/content/v1/content', {
           headers: {
             'X-Riot-Token': 'RGAPI-9af98452-0f95-4b24-a5de-0c8a91112c6c'
           }
@@ -138,29 +173,69 @@
         }
 
         const data = await response.json();
-        const items = data.items || [];
-        const total = Number(data.total || 0);
-        totalPages.value = Math.max(1, Math.ceil(total / pageSize));
-        currentPage = page;
-
-        if (!items.length) {
-          message.textContent = 'No cards were returned for this page.';
+        allSets = data.sets || [];
+        
+        if (!allSets.length) {
+          message.textContent = 'No sets found.';
           return;
         }
 
-        message.textContent = `Showing ${items.length} cards from page ${currentPage} of ${totalPages.value} (total ${total}).`;
+        setSelect.innerHTML = '<option value="">-- Select a set --</option>';
+        allSets.forEach((set, index) => {
+          const option = document.createElement('option');
+          option.value = index;
+          option.textContent = `${set.name} (${set.cards?.length || 0} cards)`;
+          setSelect.appendChild(option);
+        });
 
-        for (const card of items) {
-          const item = document.createElement('div');
-          item.className = 'card-item';
-          item.innerHTML = `<strong>${escapeHtml(card.name || 'Unnamed card')}</strong><span>Set: ${escapeHtml(card.set || 'Unknown')}</span>`;
-          cardList.appendChild(item);
-        }
-
-        prevBtn.disabled = currentPage <= 1;
-        nextBtn.disabled = currentPage >= totalPages.value;
+        message.textContent = `Loaded ${allSets.length} sets. Select one to view cards.`;
+        setSelect.disabled = false;
       } catch (error) {
         message.textContent = `Fetch failed: ${error.message}`;
+      }
+    }
+
+    function displaySetCards(setIndex) {
+      const set = allSets[setIndex];
+      if (!set) return;
+
+      cardList.innerHTML = '';
+      const cards = set.cards || [];
+
+      if (!cards.length) {
+        message.textContent = `No cards in ${set.name}.`;
+        return;
+      }
+
+      message.textContent = `Showing ${cards.length} cards from ${set.name}`;
+
+      for (const card of cards) {
+        const item = document.createElement('div');
+        item.className = 'card-item';
+        
+        const artHtml = card.art?.thumbnailURL 
+          ? `<div class="card-art"><img src="${escapeHtml(card.art.thumbnailURL)}" alt="${escapeHtml(card.name)}"></div>`
+          : `<div class="card-art"></div>`;
+        
+        const badges = [
+          card.type ? `<span class="badge">${escapeHtml(card.type)}</span>` : '',
+          card.rarity ? `<span class="badge rarity">${escapeHtml(card.rarity)}</span>` : '',
+          card.faction ? `<span class="badge faction">${escapeHtml(card.faction)}</span>` : ''
+        ].filter(b => b).join('');
+
+        const statsHtml = card.stats 
+          ? `<div style="font-size: 0.85rem; color: #475569;">Cost: ${card.stats.cost || 0} | Power: ${card.stats.power || 0} | Might: ${card.stats.might || 0}</div>`
+          : '';
+
+        item.innerHTML = artHtml + `
+          <div class="card-details">
+            <h3 class="card-name">${escapeHtml(card.name || 'Unnamed')}</h3>
+            <div class="card-meta">${badges}</div>
+            ${statsHtml}
+            ${card.description ? `<p class="card-desc">${escapeHtml(card.description)}</p>` : ''}
+          </div>
+        `;
+        cardList.appendChild(item);
       }
     }
 
@@ -170,9 +245,17 @@
       return div.innerHTML;
     }
 
-    loadBtn.addEventListener('click', () => fetchCards(1));
-    prevBtn.addEventListener('click', () => {
-      if (currentPage > 1) fetchCards(currentPage - 1);
+    setSelect.addEventListener('change', (e) => {
+      if (e.target.value === '') {
+        cardList.innerHTML = '';
+        message.textContent = 'Select a set to view cards.';
+      } else {
+        displaySetCards(parseInt(e.target.value));
+      }
+    });
+
+    // Load content on page load
+    fetchContent( if (currentPage > 1) fetchCards(currentPage - 1);
     });
     nextBtn.addEventListener('click', () => {
       if (currentPage < totalPages.value) fetchCards(currentPage + 1);
