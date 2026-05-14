@@ -1,44 +1,3 @@
-<?php
-
-$apiUrl = "https://api.riftcodex.com/cards";
-
-$ch = curl_init();
-
-curl_setopt_array($ch, [
-    CURLOPT_URL => $apiUrl,
-    CURLOPT_RETURNTRANSFER => true,
-    CURLOPT_FOLLOWLOCATION => true,
-    CURLOPT_TIMEOUT => 30,
-    CURLOPT_HTTPHEADER => [
-        "Accept: application/json",
-        "User-Agent: Mozilla/5.0"
-    ]
-]);
-
-$response = curl_exec($ch);
-
-if (curl_errno($ch)) {
-    die("cURL Error: " . curl_error($ch));
-}
-
-$httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
-
-curl_close($ch);
-
-if ($httpCode !== 200) {
-    die("Failed to load card data. HTTP Code: " . $httpCode);
-}
-
-$data = json_decode($response, true);
-
-if (!$data) {
-    die("Invalid JSON response.");
-}
-
-$items = $data['items'] ?? [];
-
-?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -53,6 +12,15 @@ $items = $data['items'] ?? [];
             padding: 20px;
         }
 
+        h1 {
+            margin-bottom: 10px;
+        }
+
+        #status {
+            margin-bottom: 20px;
+            font-weight: bold;
+        }
+
         table {
             width: 100%;
             border-collapse: collapse;
@@ -62,7 +30,6 @@ $items = $data['items'] ?? [];
         th, td {
             border: 1px solid #ccc;
             padding: 10px;
-            vertical-align: top;
         }
 
         th {
@@ -80,7 +47,7 @@ $items = $data['items'] ?? [];
 
 <h1>RiftCodex Cards</h1>
 
-<p>Total Loaded: <?php echo count($items); ?></p>
+<div id="status">Loading cards...</div>
 
 <table>
     <thead>
@@ -93,40 +60,67 @@ $items = $data['items'] ?? [];
         </tr>
     </thead>
 
-    <tbody>
-
-    <?php foreach ($items as $card): ?>
-
-        <tr>
-
-            <td>
-                <?php if (!empty($card['set']['media']['image_url'])): ?>
-                    <img src="<?php echo htmlspecialchars($card['set']['media']['image_url']); ?>">
-                <?php endif; ?>
-            </td>
-
-            <td>
-                <?php echo htmlspecialchars($card['name'] ?? 'Unknown'); ?>
-            </td>
-
-            <td>
-                <?php echo htmlspecialchars($card['classification']['type'] ?? 'Unknown'); ?>
-            </td>
-
-            <td>
-                <?php echo htmlspecialchars($card['classification']['rarity'] ?? 'Unknown'); ?>
-            </td>
-
-            <td>
-                <?php echo htmlspecialchars($card['set']['label'] ?? 'Unknown'); ?>
-            </td>
-
-        </tr>
-
-    <?php endforeach; ?>
-
-    </tbody>
+    <tbody id="cards"></tbody>
 </table>
+
+<script>
+async function loadCards() {
+
+    try {
+
+        const response = await fetch(
+            'https://api.riftcodex.com/cards'
+        );
+
+        if (!response.ok) {
+            throw new Error('HTTP ' + response.status);
+        }
+
+        const data = await response.json();
+
+        const items = data.items || [];
+
+        document.getElementById('status').innerText =
+            'Loaded ' + items.length + ' cards';
+
+        const table = document.getElementById('cards');
+
+        items.forEach(card => {
+
+            let image = '';
+
+            if (
+                card.set &&
+                card.set.media &&
+                card.set.media.image_url
+            ) {
+                image = `<img src="${card.set.media.image_url}">`;
+            }
+
+            const row = `
+                <tr>
+                    <td>${image}</td>
+                    <td>${card.name || 'Unknown'}</td>
+                    <td>${card.classification?.type || 'Unknown'}</td>
+                    <td>${card.classification?.rarity || 'Unknown'}</td>
+                    <td>${card.set?.label || 'Unknown'}</td>
+                </tr>
+            `;
+
+            table.innerHTML += row;
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        document.getElementById('status').innerText =
+            'Failed to load card data: ' + error.message;
+    }
+}
+
+loadCards();
+</script>
 
 </body>
 </html>
