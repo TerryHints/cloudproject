@@ -1,184 +1,196 @@
+<?php
+
+$query = $_GET['q'] ?? '';
+
+function fetchApi($url) {
+
+    $ch = curl_init();
+
+    curl_setopt_array($ch, [
+        CURLOPT_URL => $url,
+        CURLOPT_RETURNTRANSFER => true,
+        CURLOPT_FOLLOWLOCATION => true,
+        CURLOPT_TIMEOUT => 20,
+        CURLOPT_HTTPHEADER => [
+            "Accept: application/json",
+            "User-Agent: Mozilla/5.0"
+        ]
+    ]);
+
+    $res = curl_exec($ch);
+
+    curl_close($ch);
+
+    return json_decode($res, true);
+}
+
+// Decide endpoint
+if (trim($query) !== '') {
+
+    // SINGLE CARD / NAME SEARCH
+    $url = "https://api.riftcodex.com/cards/name?query=" .
+           urlencode($query) .
+           "&dir=1&page=1&size=50";
+
+} else {
+
+    // BROWSE MODE
+    $url = "https://api.riftcodex.com/cards/search?query=&dir=1&page=1&size=50";
+}
+
+$data = fetchApi($url);
+
+$cards = $data['items'] ?? [];
+
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>RiftCodex Search</title>
 
 <style>
+
 body {
-    margin: 0;
-    padding: 20px;
+    margin:0;
+    padding:20px;
     font-family: Arial;
-    background: #0f172a;
-    color: white;
+    background:#0f172a;
+    color:white;
 }
 
 input {
-    width: 100%;
-    padding: 12px;
-    font-size: 16px;
-    border-radius: 10px;
-    border: none;
-    margin-bottom: 15px;
+    width:100%;
+    padding:12px;
+    font-size:16px;
+    border-radius:10px;
+    border:none;
+    margin-bottom:15px;
 }
 
 .grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-    gap: 16px;
+    display:grid;
+    grid-template-columns:repeat(auto-fill,minmax(240px,1fr));
+    gap:16px;
 }
 
 .card {
-    background: #111827;
-    border-radius: 12px;
-    overflow: hidden;
+    background:#111827;
+    border-radius:12px;
+    overflow:hidden;
 }
 
 .card img {
-    width: 100%;
+    width:100%;
+    display:block;
 }
 
 .content {
-    padding: 10px;
+    padding:10px;
 }
 
 .name {
-    font-weight: bold;
-    margin-bottom: 6px;
+    font-weight:bold;
+    margin-bottom:6px;
 }
 
 .badge {
-    display: inline-block;
-    background: #1f2937;
-    padding: 4px 8px;
-    border-radius: 999px;
-    font-size: 12px;
-    margin: 2px;
+    display:inline-block;
+    background:#1f2937;
+    padding:4px 8px;
+    border-radius:999px;
+    font-size:12px;
+    margin:2px;
 }
 
-#status {
-    margin-bottom: 10px;
-    color: #94a3b8;
+.searchbar {
+    margin-bottom:10px;
 }
+
+button {
+    padding:10px 14px;
+    border:none;
+    border-radius:8px;
+    background:#2563eb;
+    color:white;
+    cursor:pointer;
+}
+
+button:hover {
+    background:#1d4ed8;
+}
+
+small {
+    color:#94a3b8;
+}
+
 </style>
 </head>
 <body>
 
-<h1>Card Search</h1>
+<h1>RiftCodex Card Search</h1>
+<nav>
+    <a href="cardsearch.php">LOAD 50</a>
+    <a href="logout.php">Logout</a>
+    <a href="search.php">Search</a>
+    <a href="#">TBD</a>
+</nav>
+<form method="GET" class="searchbar">
+    <input type="text" name="q" placeholder="Search cards..."
+           value="<?php echo htmlspecialchars($query); ?>">
+    <button type="submit">Search</button>
+</form>
 
-<input type="text" id="search" placeholder="Search cards...">
+<small>
+<?php echo $query ? "Searching for: " . htmlspecialchars($query) : "Showing all cards"; ?>
+</small>
 
-<div id="status">Loading...</div>
+<br><br>
 
-<div class="grid" id="grid"></div>
+<div class="grid">
 
-<script>
+<?php if (!empty($cards)): ?>
 
-let cards = [];
+    <?php foreach ($cards as $card): ?>
 
-const grid = document.getElementById("grid");
-const status = document.getElementById("status");
-const search = document.getElementById("search");
+        <div class="card">
 
-// LOAD DATA
-async function loadCards() {
+            <img src="<?php echo $card['media']['image_url'] ?? ''; ?>">
 
-    try {
+            <div class="content">
 
-        const res = await fetch(
-            "https://api.riftcodex.com/cards/search?query=&dir=1&page=1&size=200"
-        );
+                <div class="name">
+                    <?php echo htmlspecialchars($card['name'] ?? 'Unknown'); ?>
+                </div>
 
-        const data = await res.json();
+                <div>
+                    <span class="badge">
+                        <?php echo $card['classification']['type'] ?? 'Type'; ?>
+                    </span>
 
-        cards = data.items || [];
+                    <span class="badge">
+                        <?php echo $card['classification']['rarity'] ?? 'Rarity'; ?>
+                    </span>
 
-        status.innerText = "Loaded " + cards.length + " cards";
-
-        render(cards);
-
-    } catch (err) {
-
-        console.error(err);
-
-        status.innerText = "Failed to load cards";
-    }
-}
-
-// SIMPLE SEARCH (NO COMPLEX SCORING)
-function filterCards(query) {
-
-    query = query.toLowerCase().trim();
-
-    if (!query) return cards;
-
-    return cards.filter(c => {
-
-        return (
-            (c.name || "").toLowerCase().includes(query) ||
-            (c.classification?.type || "").toLowerCase().includes(query) ||
-            (c.classification?.rarity || "").toLowerCase().includes(query) ||
-            (c.set?.label || "").toLowerCase().includes(query) ||
-            (c.text?.plain || "").toLowerCase().includes(query) ||
-            (c.tags || []).join(" ").toLowerCase().includes(query)
-        );
-
-    });
-}
-
-// RENDER
-function render(list) {
-
-    grid.innerHTML = "";
-
-    status.innerText = "Found " + list.length + " cards";
-
-    list.forEach(card => {
-
-        grid.innerHTML += `
-            <div class="card">
-
-                <img src="${card.media?.image_url || ''}">
-
-                <div class="content">
-
-                    <div class="name">
-                        ${card.name || "Unknown"}
-                    </div>
-
-                    <div>
-                        <span class="badge">
-                            ${card.classification?.type || "Type"}
-                        </span>
-
-                        <span class="badge">
-                            ${card.classification?.rarity || "Rarity"}
-                        </span>
-
-                        <span class="badge">
-                            ${card.set?.label || "Set"}
-                        </span>
-                    </div>
-
+                    <span class="badge">
+                        <?php echo $card['set']['label'] ?? 'Set'; ?>
+                    </span>
                 </div>
 
             </div>
-        `;
-    });
-}
 
-// SEARCH INPUT
-search.addEventListener("input", () => {
+        </div>
 
-    const filtered = filterCards(search.value);
+    <?php endforeach; ?>
 
-    render(filtered);
-});
+<?php else: ?>
 
-loadCards();
+    <p>No cards found.</p>
 
-</script>
+<?php endif; ?>
+
+</div>
 
 </body>
 </html>
