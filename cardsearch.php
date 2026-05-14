@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Riftcodex Card Browser</title>
+  <title>Riftcodex Origins Cards</title>
   <style>
     * {
       margin: 0;
@@ -13,93 +13,74 @@
 
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      background: #f4f6fb;
-      color: #1f2937;
-    }
-
-    nav {
-      width: 100%;
-      background: #333;
-      padding: 1rem;
-      position: fixed;
-      top: 0;
-      left: 0;
+      background: #eef2ff;
+      color: #0f172a;
+      min-height: 100vh;
       display: flex;
       justify-content: center;
-      gap: 20px;
-      z-index: 100;
-    }
-
-    nav a {
-      color: white;
-      text-decoration: none;
-      font-weight: 500;
-      transition: color 0.2s;
-    }
-
-    nav a:hover {
-      color: #D13639;
+      align-items: flex-start;
+      padding: 24px;
     }
 
     .page {
       width: 100%;
       max-width: 1000px;
       background: #ffffff;
-      border-radius: 12px;
-      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.08);
+      border-radius: 20px;
+      box-shadow: 0 20px 60px rgba(15, 23, 42, 0.12);
       padding: 28px;
-      margin: 80px auto 40px;
+      overflow: hidden;
     }
 
     h1 {
-      margin-bottom: 12px;
+      margin-bottom: 10px;
       font-size: 2rem;
-      color: #0f172a;
     }
 
     .lead {
-      margin-bottom: 24px;
-      color: #64748b;
+      margin-bottom: 22px;
+      color: #475569;
       line-height: 1.6;
     }
 
     .controls {
       display: flex;
-      gap: 12px;
-      margin-bottom: 24px;
       flex-wrap: wrap;
-      align-items: center;
-    }
-
-    .controls select,
-    .controls button {
-      border: 1px solid #d1d5db;
-      border-radius: 8px;
-      padding: 10px 14px;
-      font-size: 1rem;
+      gap: 12px;
+      margin-bottom: 22px;
     }
 
     .controls button {
-      background: #1d4ed8;
-      color: #ffffff;
+      padding: 12px 18px;
+      border-radius: 10px;
+      border: none;
       cursor: pointer;
-      border-color: transparent;
       font-weight: 600;
+      color: #ffffff;
+      background: #2563eb;
+      transition: transform 0.15s ease, filter 0.15s ease;
     }
 
     .controls button:disabled {
-      opacity: 0.55;
-      cursor: default;
+      background: #93c5fd;
+      cursor: not-allowed;
+    }
+
+    .controls button:hover:not(:disabled) {
+      filter: brightness(1.05);
+      transform: translateY(-1px);
     }
 
     #message {
-      padding: 14px 16px;
+      padding: 16px 18px;
       margin-bottom: 20px;
-      background: #f8fafc;
-      border-left: 4px solid #3b82f6;
-      border-radius: 8px;
-      color: #334155;
-      line-height: 1.5;
+      border-left: 5px solid #2563eb;
+      background: #eff6ff;
+      color: #1e3a8a;
+      border-radius: 12px;
+      min-height: 56px;
+      display: flex;
+      align-items: center;
     }
 
     .card-list {
@@ -108,12 +89,15 @@
     }
 
     .card-item {
-      display: grid;
-      gap: 12px;
       padding: 18px;
-      border: 1px solid #e5e7eb;
-      border-radius: 12px;
-      background: #ffffff;
+      border-radius: 16px;
+      border: 1px solid #e2e8f0;
+      background: #f8fafc;
+      transition: box-shadow 0.2s ease;
+    }
+
+    .card-item:hover {
+      box-shadow: 0 10px 24px rgba(15, 23, 42, 0.08);
     }
 
     .card-header {
@@ -121,171 +105,93 @@
       justify-content: space-between;
       flex-wrap: wrap;
       gap: 10px;
-      align-items: center;
+      align-items: flex-start;
     }
 
     .card-name {
-      font-size: 1.05rem;
+      font-size: 1.1rem;
       font-weight: 700;
-      color: #0f172a;
+      color: #111827;
     }
 
     .meta-row {
       display: flex;
-      gap: 10px;
+      gap: 8px;
       flex-wrap: wrap;
       color: #475569;
       font-size: 0.9rem;
     }
 
     .meta-pill {
-      background: #eef2ff;
-      color: #3730a3;
+      background: #dbeafe;
+      color: #1d4ed8;
       padding: 5px 10px;
       border-radius: 999px;
-      font-size: 0.85rem;
+      font-weight: 600;
     }
 
     .card-desc {
+      margin-top: 12px;
       color: #475569;
-      line-height: 1.6;
-      margin-top: 6px;
+      line-height: 1.7;
     }
 
     @media (max-width: 720px) {
+      body {
+        padding: 16px;
+      }
+
       .page {
-        margin: 100px 16px 40px;
-        padding: 22px;
+        padding: 20px;
+        margin-top: 20px;
       }
     }
   </style>
 </head>
 <body>
-  <nav>
-    <a href="home2.php">Home</a>
-    <a href="logout.php">Logout</a>
-  </nav>
-
   <div class="page">
-    <h1>Riftcodex Card Browser</h1>
-    <p class="lead">Load set data from <strong>https://api.riftcodex.com</strong> and browse cards by set.</p>
+    <h1>Riftcodex Origins Cards</h1>
+    <p class="lead">This page calls the exact Origins cards endpoint and displays card names, set, and metadata.</p>
 
     <div class="controls">
-      <select id="set-select">
-        <option value="">Loading available sets...</option>
-      </select>
-      <button id="refresh-sets" type="button">Refresh Sets</button>
+      <button id="load-btn" type="button">Load Page 1</button>
+      <button id="prev-btn" type="button" disabled>Previous</button>
+      <button id="next-btn" type="button" disabled>Next</button>
     </div>
 
-    <div class="controls">
-      <button id="load-cards" type="button" disabled>Load Cards</button>
-      <button id="prev-page" type="button" disabled>Previous</button>
-      <button id="next-page" type="button" disabled>Next</button>
-    </div>
-
-    <p id="message">Select a set and click Load Cards.</p>
+    <div id="message">Ready to fetch Origins cards.</div>
     <div id="card-list" class="card-list"></div>
   </div>
 
   <script>
-    const baseUrl = 'https://api.riftcodex.com';
-    const setSelect = document.getElementById('set-select');
-    const refreshSetsBtn = document.getElementById('refresh-sets');
-    const loadCardsBtn = document.getElementById('load-cards');
-    const prevPageBtn = document.getElementById('prev-page');
-    const nextPageBtn = document.getElementById('next-page');
+    const baseUrl = 'https://api.riftcodex.com/api/cards';
+    const pageSize = 20;
+    let currentPage = 1;
+    let totalCards = 0;
+
     const message = document.getElementById('message');
     const cardList = document.getElementById('card-list');
-
-    let availableSets = [];
-    let currentPage = 1;
-    let currentSetId = '';
-    let totalCards = 0;
-    const pageSize = 20;
-
-    async function fetchJson(url) {
-      const response = await fetch(url);
-      if (!response.ok) {
-        const body = await response.text();
-        throw new Error(`HTTP ${response.status} ${response.statusText}: ${body}`);
-      }
-      return response.json();
-    }
-
-    async function fetchSets() {
-      const endpoints = [`${baseUrl}/sets`, `${baseUrl}/api/sets`];
-      setSelect.innerHTML = '<option value="">Loading available sets...</option>';
-      setSelect.disabled = true;
-      loadCardsBtn.disabled = true;
-      message.textContent = 'Fetching available sets from the API...';
-      cardList.innerHTML = '';
-
-      try {
-        let data = null;
-        let usedUrl = '';
-
-        for (const endpoint of endpoints) {
-          try {
-            data = await fetchJson(endpoint);
-            usedUrl = endpoint;
-            break;
-          } catch (innerError) {
-            console.warn('Set endpoint failed:', endpoint, innerError.message);
-          }
-        }
-
-        if (!data) {
-          throw new Error(`Could not load sets from ${endpoints.join(' or ')}`);
-        }
-
-        availableSets = Array.isArray(data) ? data : data.sets || [];
-        if (!availableSets.length) {
-          setSelect.innerHTML = '<option value="">No sets found</option>';
-          message.textContent = `No sets were returned by the API (tried ${usedUrl}).`;
-          return;
-        }
-
-        setSelect.innerHTML = '<option value="">-- Select a set --</option>';
-        availableSets.forEach((set) => {
-          const id = set.id || set.set_id || set.key || set.name || '';
-          const label = set.name || set.id || set.set_id || '(Unnamed)';
-          const count = set.card_count || (Array.isArray(set.cards) ? set.cards.length : '-');
-          const option = document.createElement('option');
-          option.value = id;
-          option.textContent = `${label} (${count} cards)`;
-          setSelect.appendChild(option);
-        });
-
-        message.textContent = 'Select a set and click Load Cards.';
-        setSelect.disabled = false;
-      } catch (error) {
-        message.textContent = `Failed to load sets: ${error.message}`;
-        console.error(error);
-      }
-    }
+    const loadBtn = document.getElementById('load-btn');
+    const prevBtn = document.getElementById('prev-btn');
+    const nextBtn = document.getElementById('next-btn');
 
     async function fetchCards(page = 1) {
-      if (!currentSetId) {
-        message.textContent = 'Choose a set first.';
-        return;
-      }
-
+      const url = `${baseUrl}?limit=${pageSize}&page=${page}&set_id=ogn`;
+      message.textContent = `Fetching page ${page}...`;
       cardList.innerHTML = '';
-      message.textContent = 'Loading cards...';
-      loadCardsBtn.disabled = true;
-      prevPageBtn.disabled = true;
-      nextPageBtn.disabled = true;
+      loadBtn.disabled = true;
+      prevBtn.disabled = true;
+      nextBtn.disabled = true;
 
       try {
-        const url = `${baseUrl}/api/cards?limit=${pageSize}&page=${page}&set_id=${encodeURIComponent(currentSetId)}`;
         const response = await fetch(url);
+        const text = await response.text();
 
         if (!response.ok) {
-          const body = await response.text();
-          throw new Error(`HTTP ${response.status} ${response.statusText}: ${body}`);
+          throw new Error(`HTTP ${response.status} ${response.statusText}: ${text}`);
         }
 
-        const data = await response.json();
+        const data = JSON.parse(text);
         const items = Array.isArray(data.items) ? data.items : [];
         totalCards = Number(data.total || items.length);
         currentPage = page;
@@ -301,57 +207,50 @@
         items.forEach((card) => {
           const item = document.createElement('div');
           item.className = 'card-item';
-
           const cardName = card.name || 'Unnamed card';
-          const cardSet = card.set || currentSetId;
-          const badgeList = [];
-          if (card.type) badgeList.push(`<span class="meta-pill">${escapeHtml(card.type)}</span>`);
-          if (card.rarity) badgeList.push(`<span class="meta-pill">${escapeHtml(card.rarity)}</span>`);
-          if (card.faction) badgeList.push(`<span class="meta-pill">${escapeHtml(card.faction)}</span>`);
+          const cardSet = card.set || 'OGN';
+          const typeBadge = card.type ? `<span class="meta-pill">Type: ${escapeHtml(card.type)}</span>` : '';
+          const rarityBadge = card.rarity ? `<span class="meta-pill">Rarity: ${escapeHtml(card.rarity)}</span>` : '';
+          const description = card.description ? `<div class="card-desc">${escapeHtml(card.description)}</div>` : '';
 
           item.innerHTML = `
             <div class="card-header">
               <div class="card-name">${escapeHtml(cardName)}</div>
               <div class="meta-row">
                 <span class="meta-pill">Set: ${escapeHtml(cardSet)}</span>
-                ${badgeList.join('')}
+                ${typeBadge}
+                ${rarityBadge}
               </div>
             </div>
-            ${card.description ? `<div class="card-desc">${escapeHtml(card.description)}</div>` : ''}
+            ${description}
           `;
 
           cardList.appendChild(item);
         });
 
-        prevPageBtn.disabled = currentPage <= 1;
-        nextPageBtn.disabled = currentPage >= Math.ceil(totalCards / pageSize);
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= Math.ceil(totalCards / pageSize);
       } catch (error) {
-        message.textContent = `Failed to load cards: ${error.message}`;
+        message.textContent = `Fetch failed: ${error.message}`;
         console.error(error);
       } finally {
-        loadCardsBtn.disabled = false;
+        loadBtn.disabled = false;
       }
     }
 
     function escapeHtml(value) {
-      const span = document.createElement('span');
-      span.textContent = value;
-      return span.innerHTML;
+      const div = document.createElement('div');
+      div.textContent = value;
+      return div.innerHTML;
     }
 
-    setSelect.addEventListener('change', () => {
-      currentSetId = setSelect.value;
-      loadCardsBtn.disabled = !currentSetId;
-      cardList.innerHTML = '';
-      message.textContent = currentSetId ? 'Ready to load cards.' : 'Select a set and click Load Cards.';
+    loadBtn.addEventListener('click', () => fetchCards(1));
+    prevBtn.addEventListener('click', () => {
+      if (currentPage > 1) fetchCards(currentPage - 1);
     });
-
-    refreshSetsBtn.addEventListener('click', fetchSets);
-    loadCardsBtn.addEventListener('click', () => fetchCards(1));
-    prevPageBtn.addEventListener('click', () => fetchCards(Math.max(1, currentPage - 1)));
-    nextPageBtn.addEventListener('click', () => fetchCards(currentPage + 1));
-
-    fetchSets();
+    nextBtn.addEventListener('click', () => {
+      fetchCards(currentPage + 1);
+    });
   </script>
 </body>
 </html>
