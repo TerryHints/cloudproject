@@ -33,9 +33,9 @@ if (!isset($_SESSION['username'])) {
 </header>
 
 <nav>
-    <a href="cardsearch.php">Card Search</a>
+    <a href="cardsearch.php">LOAD 50</a>
     <a href="logout.php">Logout</a>
-    <a href="#">TBD</a>
+    <a href="search.php">Search</a>
     <a href="#">TBD</a>
 </nav>
 
