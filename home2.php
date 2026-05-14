@@ -6,6 +6,7 @@ if (!isset($_SESSION['username'])) {
     header("Location: login.html");
     exit();
 }
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
