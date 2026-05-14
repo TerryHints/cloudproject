@@ -6,10 +6,13 @@
     <title>RiftCodex Cards</title>
 
     <style>
+
         body {
-            font-family: Arial, sans-serif;
-            background: #f4f4f4;
+            margin: 0;
             padding: 20px;
+            background: #111827;
+            font-family: Arial, sans-serif;
+            color: white;
         }
 
         h1 {
@@ -18,29 +21,84 @@
 
         #status {
             margin-bottom: 20px;
+            color: #9ca3af;
+        }
+
+        .card-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: #1f2937;
+            border-radius: 14px;
+            overflow: hidden;
+            transition: 0.2s ease;
+            box-shadow: 0 4px 14px rgba(0,0,0,0.35);
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+        }
+
+        .card img {
+            width: 100%;
+            display: block;
+        }
+
+        .card-content {
+            padding: 15px;
+        }
+
+        .card-title {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            margin-right: 6px;
+            margin-bottom: 6px;
             font-weight: bold;
         }
 
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            background: white;
+        .type {
+            background: #2563eb;
         }
 
-        th, td {
-            border: 1px solid #ccc;
-            padding: 10px;
+        .rarity-common {
+            background: #6b7280;
         }
 
-        th {
-            background: #222;
-            color: white;
+        .rarity-uncommon {
+            background: #059669;
         }
 
-        img {
-            width: 120px;
-            border-radius: 6px;
+        .rarity-rare {
+            background: #7c3aed;
         }
+
+        .rarity-epic {
+            background: #dc2626;
+        }
+
+        .set {
+            background: #d97706;
+        }
+
+        .text {
+            margin-top: 12px;
+            color: #d1d5db;
+            line-height: 1.5;
+            font-size: 14px;
+        }
+
     </style>
 </head>
 <body>
@@ -49,21 +107,10 @@
 
 <div id="status">Loading cards...</div>
 
-<table>
-    <thead>
-        <tr>
-            <th>Image</th>
-            <th>Name</th>
-            <th>Type</th>
-            <th>Rarity</th>
-            <th>Set</th>
-        </tr>
-    </thead>
-
-    <tbody id="cards"></tbody>
-</table>
+<div class="card-grid" id="cardGrid"></div>
 
 <script>
+
 async function loadCards() {
 
     try {
@@ -83,31 +130,46 @@ async function loadCards() {
         document.getElementById('status').innerText =
             'Loaded ' + items.length + ' cards';
 
-        const table = document.getElementById('cards');
+        const grid = document.getElementById('cardGrid');
 
         items.forEach(card => {
 
-            let image = '';
+            const rarity =
+                card.classification?.rarity?.toLowerCase() || 'common';
 
-            if (
-                card.set &&
-                card.set.media &&
-                card.set.media.image_url
-            ) {
-                image = `<img src="${card.set.media.image_url}">`;
-            }
+            const html = `
+                <div class="card">
 
-            const row = `
-                <tr>
-                    <td>${image}</td>
-                    <td>${card.name || 'Unknown'}</td>
-                    <td>${card.classification?.type || 'Unknown'}</td>
-                    <td>${card.classification?.rarity || 'Unknown'}</td>
-                    <td>${card.set?.label || 'Unknown'}</td>
-                </tr>
+                    <img src="${card.set?.media?.image_url || ''}">
+
+                    <div class="card-content">
+
+                        <div class="card-title">
+                            ${card.name || 'Unknown'}
+                        </div>
+
+                        <span class="badge type">
+                            ${card.classification?.type || 'Unknown'}
+                        </span>
+
+                        <span class="badge rarity-${rarity}">
+                            ${card.classification?.rarity || 'Common'}
+                        </span>
+
+                        <span class="badge set">
+                            ${card.set?.label || 'Unknown Set'}
+                        </span>
+
+                        <div class="text">
+                            ${card.plain || 'No description available.'}
+                        </div>
+
+                    </div>
+
+                </div>
             `;
 
-            table.innerHTML += row;
+            grid.innerHTML += html;
         });
 
     } catch (error) {
@@ -115,11 +177,12 @@ async function loadCards() {
         console.error(error);
 
         document.getElementById('status').innerText =
-            'Failed to load card data: ' + error.message;
+            'Failed to load cards: ' + error.message;
     }
 }
 
 loadCards();
+
 </script>
 
 </body>
