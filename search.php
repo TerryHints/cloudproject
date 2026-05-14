@@ -2,8 +2,8 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale="1.0">
-<title>RiftCodex Card Search</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RiftCodex Search</title>
 
 <style>
 body {
@@ -14,22 +14,13 @@ body {
     color: white;
 }
 
-h1 {
-    margin-bottom: 10px;
-}
-
 input {
     width: 100%;
     padding: 12px;
+    font-size: 16px;
     border-radius: 10px;
     border: none;
-    font-size: 16px;
     margin-bottom: 15px;
-}
-
-#status {
-    margin-bottom: 15px;
-    color: #94a3b8;
 }
 
 .grid {
@@ -40,9 +31,8 @@ input {
 
 .card {
     background: #111827;
-    border-radius: 14px;
+    border-radius: 12px;
     overflow: hidden;
-    border: 1px solid rgba(255,255,255,0.08);
 }
 
 .card img {
@@ -50,7 +40,7 @@ input {
 }
 
 .content {
-    padding: 12px;
+    padding: 10px;
 }
 
 .name {
@@ -67,21 +57,14 @@ input {
     margin: 2px;
 }
 
-.text {
-    font-size: 13px;
-    color: #cbd5e1;
-    margin-top: 8px;
+#status {
+    margin-bottom: 10px;
+    color: #94a3b8;
 }
 </style>
 </head>
 <body>
-<body>
-    <nav>
-    <a href="home2.php">Home</a>
-    <a href="logout.php">Logout</a>
-    <a href="#">TBD</a>
-    <a href="#">TBD</a>
-</nav>
+
 <h1>Card Search</h1>
 
 <input type="text" id="search" placeholder="Search cards...">
@@ -92,93 +75,66 @@ input {
 
 <script>
 
-let cache = [];
-let timeout = null;
+let cards = [];
 
-const searchInput = document.getElementById("search");
+const grid = document.getElementById("grid");
+const status = document.getElementById("status");
+const search = document.getElementById("search");
 
-searchInput.addEventListener("input", () => {
-
-    clearTimeout(timeout);
-
-    timeout = setTimeout(() => {
-        render(searchInput.value);
-    }, 250);
-
-});
-
+// LOAD DATA
 async function loadCards() {
 
-    const res = await fetch(
-        "https://api.riftcodex.com/cards/search?query=&dir=1&page=1&size=200"
-    );
+    try {
 
-    const data = await res.json();
+        const res = await fetch(
+            "https://api.riftcodex.com/cards/search?query=&dir=1&page=1&size=200"
+        );
 
-    cache = data.items || [];
+        const data = await res.json();
 
-    document.getElementById("status").innerText =
-        "Loaded " + cache.length + " cards";
+        cards = data.items || [];
 
-    render("");
-}
+        status.innerText = "Loaded " + cards.length + " cards";
 
-function scoreCard(card, q) {
+        render(cards);
 
-    let score = 0;
+    } catch (err) {
 
-    const name = (card.name || "").toLowerCase();
-    const type = (card.classification?.type || "").toLowerCase();
-    const rarity = (card.classification?.rarity || "").toLowerCase();
-    const set = (card.set?.label || "").toLowerCase();
-    const text = (card.text?.plain || "").toLowerCase();
-    const tags = (card.tags || []).join(" ").toLowerCase();
+        console.error(err);
 
-    // exact name match = strongest
-    if (name === q) score += 100;
-
-    // name contains query
-    if (name.includes(q)) score += 50;
-
-    // tags match
-    if (tags.includes(q)) score += 30;
-
-    // type / rarity / set
-    if (type.includes(q)) score += 20;
-    if (rarity.includes(q)) score += 15;
-    if (set.includes(q)) score += 15;
-
-    // text match (weak)
-    if (text.includes(q)) score += 5;
-
-    return score;
-}
-
-function render(query) {
-
-    const q = query.toLowerCase().trim();
-
-    let results = cache;
-
-    if (q.length > 0) {
-
-        results = cache
-            .map(card => ({
-                card,
-                score: scoreCard(card, q)
-            }))
-            .filter(x => x.score > 0)
-            .sort((a, b) => b.score - a.score)
-            .map(x => x.card);
+        status.innerText = "Failed to load cards";
     }
+}
 
-    document.getElementById("status").innerText =
-        "Found " + results.length + " cards";
+// SIMPLE SEARCH (NO COMPLEX SCORING)
+function filterCards(query) {
 
-    const grid = document.getElementById("grid");
+    query = query.toLowerCase().trim();
+
+    if (!query) return cards;
+
+    return cards.filter(c => {
+
+        return (
+            (c.name || "").toLowerCase().includes(query) ||
+            (c.classification?.type || "").toLowerCase().includes(query) ||
+            (c.classification?.rarity || "").toLowerCase().includes(query) ||
+            (c.set?.label || "").toLowerCase().includes(query) ||
+            (c.text?.plain || "").toLowerCase().includes(query) ||
+            (c.tags || []).join(" ").toLowerCase().includes(query)
+        );
+
+    });
+}
+
+// RENDER
+function render(list) {
+
     grid.innerHTML = "";
 
-    results.forEach(card => {
+    status.innerText = "Found " + list.length + " cards";
+
+    list.forEach(card => {
 
         grid.innerHTML += `
             <div class="card">
@@ -205,16 +161,20 @@ function render(query) {
                         </span>
                     </div>
 
-                    <div class="text">
-                        ${card.text?.plain || ""}
-                    </div>
-
                 </div>
 
             </div>
         `;
     });
 }
+
+// SEARCH INPUT
+search.addEventListener("input", () => {
+
+    const filtered = filterCards(search.value);
+
+    render(filtered);
+});
 
 loadCards();
 
