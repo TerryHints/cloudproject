@@ -1,114 +1,95 @@
 <?php
 
-// API URL
 $apiUrl = "https://api.riftcodex.com/api/cards?limit=20&page=1&set_id=ogn";
 
-// Initialize cURL
 $ch = curl_init();
 
-// Set cURL options
-curl_setopt($ch, CURLOPT_URL, $apiUrl);
-curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-curl_setopt($ch, CURLOPT_TIMEOUT, 10);
+curl_setopt_array($ch, [
+    CURLOPT_URL => $apiUrl,
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_FOLLOWLOCATION => true,
+    CURLOPT_TIMEOUT => 30,
 
-// Execute request
+    // IMPORTANT
+    CURLOPT_HTTPHEADER => [
+        "Accept: application/json",
+        "User-Agent: Mozilla/5.0"
+    ]
+]);
+
 $response = curl_exec($ch);
 
-// Check for errors
 if (curl_errno($ch)) {
     die("cURL Error: " . curl_error($ch));
 }
 
-// Get HTTP status code
 $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 
 curl_close($ch);
 
-// Check if API returned success
 if ($httpCode !== 200) {
     die("Failed to load card data. HTTP Code: " . $httpCode);
 }
 
-// Decode JSON
 $data = json_decode($response, true);
 
 if (!$data) {
     die("Invalid JSON response.");
 }
 
-// Extract data
 $total = $data['total'] ?? 0;
 $items = $data['items'] ?? [];
 
 ?>
 
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>RiftCodex Cards</title>
 
     <style>
         body {
-            font-family: Arial, sans-serif;
+            font-family: Arial;
             background: #f4f4f4;
             padding: 20px;
         }
 
-        h1 {
-            color: #333;
-        }
-
-        .card-table {
+        table {
             width: 100%;
             border-collapse: collapse;
             background: white;
         }
 
-        .card-table th,
-        .card-table td {
-            padding: 12px;
-            border: 1px solid #ddd;
+        th, td {
+            padding: 10px;
+            border: 1px solid #ccc;
         }
 
-        .card-table th {
+        th {
             background: #222;
             color: white;
-        }
-
-        .card-table tr:nth-child(even) {
-            background: #f9f9f9;
         }
     </style>
 </head>
 <body>
 
-<h1>Origins Set Cards</h1>
+<h1>Origins Cards</h1>
 
-<p><strong>Total Cards:</strong> <?php echo htmlspecialchars($total); ?></p>
+<p>Total: <?php echo $total; ?></p>
 
-<table class="card-table">
-    <thead>
+<table>
+    <tr>
+        <th>Name</th>
+        <th>Set</th>
+    </tr>
+
+    <?php foreach ($items as $card): ?>
         <tr>
-            <th>Name</th>
-            <th>Set</th>
+            <td><?php echo htmlspecialchars($card['name']); ?></td>
+            <td><?php echo htmlspecialchars($card['set']); ?></td>
         </tr>
-    </thead>
-    <tbody>
-        <?php if (!empty($items)): ?>
-            <?php foreach ($items as $card): ?>
-                <tr>
-                    <td><?php echo htmlspecialchars($card['name'] ?? 'Unknown'); ?></td>
-                    <td><?php echo htmlspecialchars($card['set'] ?? 'Unknown'); ?></td>
-                </tr>
-            <?php endforeach; ?>
-        <?php else: ?>
-            <tr>
-                <td colspan="2">No cards found.</td>
-            </tr>
-        <?php endif; ?>
-    </tbody>
+    <?php endforeach; ?>
+
 </table>
 
 </body>
