@@ -28,7 +28,7 @@ if (!isset($_SESSION['username'])) {
 <body>
 
 <header>
-    <h1>This will be a very creative name in the future :^)</h1>
+    <h1>RiftBound</h1>
 </header>
 
 <nav>
