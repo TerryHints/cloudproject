@@ -6,7 +6,6 @@ if (!isset($_SESSION['username'])) {
     header("Location: login.html");
     exit();
 }
-?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,7 +31,7 @@ if (!isset($_SESSION['username'])) {
 </header>
 
 <nav>
-    <a href="#">TBD</a>
+    <a href="cardsearch.php">Card Search</a>
     <a href="logout.php">Logout</a>
     <a href="#">TBD</a>
     <a href="#">TBD</a>
